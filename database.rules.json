@@ -1,0 +1,170 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "usersPrivate": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "publicProfiles": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "usernames": {
+      ".read": "auth != null",
+      "$username": {
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid || newData.val() === null)"
+      }
+    },
+    "status": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid",
+        "$statusId": {
+          "views": {
+            "$viewerUid": {
+              ".write": "auth != null && auth.uid === $viewerUid"
+            }
+          },
+          "reactions": {
+            "$reactorUid": {
+              ".write": "auth != null && auth.uid === $reactorUid"
+            }
+          }
+        }
+      }
+    },
+    "statusIndex": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "stories": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "messages": {
+      "$chatId": {
+        ".read": "auth != null && $chatId.contains(auth.uid)",
+        ".write": "auth != null && $chatId.contains(auth.uid)"
+      }
+    },
+    "groupMessages": {
+      "$groupId": {
+        ".read": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()",
+        ".write": "auth != null && root.child('groups/' + $groupId + '/members/' + auth.uid).exists()"
+      }
+    },
+    "groups": {
+      ".read": "auth != null",
+      "$groupId": {
+        ".write": "auth != null && (!data.exists() || data.child('admin').val() === auth.uid || data.child('members/' + auth.uid).exists())"
+      }
+    },
+    "requests": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$senderUid": {
+          ".write": "auth != null && (auth.uid === $senderUid || auth.uid === $uid)"
+        }
+      }
+    },
+    "calls": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "p2pInbox": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
+    "transferRequests": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
+    "transfers": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
+    "typing": {
+      "$chatId": {
+        ".read": "auth != null && $chatId.contains(auth.uid)",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    },
+    "unreadCounts": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
+    "reports": {
+      ".read": false,
+      ".write": "auth != null"
+    },
+    "posts": {
+      ".read": "auth != null",
+      "$postId": {
+        ".write": "auth != null && (!data.exists() || data.child('author/uid').val() === auth.uid)"
+      }
+    },
+    "postLikes": {
+      ".read": "auth != null",
+      "$postId": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    },
+    "postComments": {
+      ".read": "auth != null",
+      "$postId": {
+        "$commentId": {
+          ".write": "auth != null && (!data.exists() || data.child('author/uid').val() === auth.uid)"
+        }
+      }
+    },
+    "userSaves": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "gameChallenges": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$challengeId": {
+          ".write": "auth != null"
+        }
+      }
+    },
+    "games": {
+      "$gameType": {
+        "$roomId": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() || data.child('players/' + auth.uid).exists() || data.child('hostUid').val() === auth.uid || !data.child('players').exists())"
+        }
+      }
+    }
+  }
+}

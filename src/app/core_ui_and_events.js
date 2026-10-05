@@ -291,6 +291,7 @@ function votePoll(key, index) {
 function openAttachSheet() {
   const hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   openSheet('Send Attachment', [
+    { icon: '🎮', label: 'Play Game', sub: 'Ludo, Chess or Carrom', run: openGameChallengeMenu },
     { icon: '🖼️', label: 'Photo', sub: 'High-quality compressed photo', run: () => pickFile('image') },
     { icon: '🎬', label: 'Video', sub: 'Fast P2P video transfer', run: () => pickFile('video') },
     { icon: '🎵', label: 'Audio file', run: () => pickFile('audio') },
@@ -301,6 +302,17 @@ function openAttachSheet() {
     { icon: '📍', label: 'Location', sub: 'Share current GPS location', run: shareLocation },
     { icon: '📷', label: 'Camera', sub: hasCamera ? 'Take photo now' : 'Unavailable', disabled: !hasCamera, run: capturePhoto },
     { icon: '📝', label: 'New status', sub: 'Post 24h status update', run: openStatusComposer }
+  ]);
+}
+
+function openGameChallengeMenu() {
+  if (!ST.chat) return;
+  const targetUid = ST.chat.targetId;
+  openSheet('Challenge to Arcade Game', [
+    { icon: '🎲', label: 'Play Ludo (2 Players)', run: () => ArcadeEngine.sendGameChallenge('ludo', targetUid) },
+    { icon: '🎲', label: 'Play Ludo (4 Players)', run: () => ArcadeEngine.sendGameChallenge('ludo', targetUid) },
+    { icon: '♟️', label: 'Play Speed Chess', run: () => ArcadeEngine.sendGameChallenge('chess', targetUid) },
+    { icon: '🎯', label: 'Play Carrom Strike', run: () => ArcadeEngine.sendGameChallenge('carrom', targetUid) }
   ]);
 }
 
@@ -1109,4 +1121,136 @@ function wireMessageEvents() {
       }, 220);
     }
   }, { passive: true });
+}
+
+/* ============================ HOME COMMAND CENTER ============================ */
+function renderHome() {
+  const container = s('home-content');
+  if (!container || !ST.me) return;
+
+  const prof = ST.gamerProfile || { level: 1, xp: 0, totalWins: 0, streak: 0 };
+  const onlineUsers = Object.values(ST.users || {}).filter(u => u && u.uid !== ST.me.uid && isUserOnlineNow(u) && !isBlockedBy(u));
+  const recentChats = (typeof chatEntries === 'function' ? chatEntries() : []).slice(0, 3);
+  const pulsePosts = (typeof PostsEngine !== 'undefined' ? PostsEngine.getSortedFeed() : []).slice(0, 2);
+
+  container.innerHTML = `
+    <div style="padding:14px 14px 32px">
+      <!-- 1. GREETING & GAMER LEVEL HERO -->
+      <div style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(124,58,237,0.08));border:1px solid rgba(37,99,235,0.2);border-radius:20px;padding:16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:12px">
+          ${getAvatarHTML(ST.me, 'md')}
+          <div>
+            <div style="font-size:16px;font-weight:800;color:var(--kr-txt)">Hello, ${esc(userLabel(ST.me).split(' ')[0])}!</div>
+            <div style="font-size:12px;color:var(--kr-mut)">Arcade Level ${prof.level} · ${prof.xp} XP</div>
+          </div>
+        </div>
+        <button class="btn sm" onclick="Nav.tab_('arcade')" style="height:32px;font-size:12.5px;padding:0 12px">
+          🎮 Play Arcade
+        </button>
+      </div>
+
+      <!-- 2. QUICK ACTIONS BAR -->
+      <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:8px;margin-bottom:20px;text-align:center">
+        <button class="card" onclick="openPostComposer()" style="padding:12px 6px;border-radius:14px;border:1px solid var(--kr-line);background:var(--kr-elev);cursor:pointer">
+          <div style="font-size:22px;margin-bottom:4px">✍️</div>
+          <div style="font-size:11.5px;font-weight:700">New Post</div>
+        </button>
+        <button class="card" onclick="openStatusComposer()" style="padding:12px 6px;border-radius:14px;border:1px solid var(--kr-line);background:var(--kr-elev);cursor:pointer">
+          <div style="font-size:22px;margin-bottom:4px">✨</div>
+          <div style="font-size:11.5px;font-weight:700">Add Status</div>
+        </button>
+        <button class="card" onclick="Nav.tab_('chats')" style="padding:12px 6px;border-radius:14px;border:1px solid var(--kr-line);background:var(--kr-elev);cursor:pointer">
+          <div style="font-size:22px;margin-bottom:4px">💬</div>
+          <div style="font-size:11.5px;font-weight:700">Messages</div>
+        </button>
+        <button class="card" onclick="openGamerProfileModal()" style="padding:12px 6px;border-radius:14px;border:1px solid var(--kr-line);background:var(--kr-elev);cursor:pointer">
+          <div style="font-size:22px;margin-bottom:4px">🏆</div>
+          <div style="font-size:11.5px;font-weight:700">Stats</div>
+        </button>
+      </div>
+
+      <!-- 3. FRIENDS ONLINE NOW -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-weight:700;font-size:14px">Friends Online</div>
+        <a style="font-size:12px;color:var(--kr-brand);cursor:pointer;font-weight:600" onclick="Nav.tab_('people')">See All (${onlineUsers.length})</a>
+      </div>
+      <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;margin-bottom:18px;scrollbar-width:none">
+        ${onlineUsers.length ? onlineUsers.map(u => `
+          <div style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:none;width:58px" onclick="attemptOpenChat('${esc(u.uid)}')">
+            <div class="presence on" style="position:relative">
+              ${getAvatarHTML(u, 'md')}
+            </div>
+            <span style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58px">${esc(userLabel(u).split(' ')[0])}</span>
+          </div>
+        `).join('') : `
+          <div style="font-size:12.5px;color:var(--kr-mut);padding:8px 0">No friends online right now. Check Discover to meet people!</div>
+        `}
+      </div>
+
+      <!-- 4. ARCADE HIGHLIGHTS -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-weight:700;font-size:14px">Arcade Highlights</div>
+        <a style="font-size:12px;color:var(--kr-brand);cursor:pointer;font-weight:600" onclick="Nav.tab_('arcade')">All Games</a>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <div class="arcade-card" onclick="ArcadeEngine.createRoom('ludo', 2)" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:16px;padding:14px;cursor:pointer">
+          <div style="font-size:26px;margin-bottom:6px">🎲</div>
+          <div style="font-weight:800;font-size:14px">Ludo Club</div>
+          <div style="font-size:11.5px;color:var(--kr-mut)">Classic 1v1 Race</div>
+        </div>
+        <div class="arcade-card" onclick="ArcadeEngine.createRoom('chess', 2)" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:16px;padding:14px;cursor:pointer">
+          <div style="font-size:26px;margin-bottom:6px">♟️</div>
+          <div style="font-weight:800;font-size:14px">Speed Chess</div>
+          <div style="font-size:11.5px;color:var(--kr-mut)">Tactical Duel</div>
+        </div>
+      </div>
+
+      <!-- 5. TRENDING PULSE SPOTLIGHT -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-weight:700;font-size:14px">⚡ Trending on Pulse</div>
+        <a style="font-size:12px;color:var(--kr-brand);cursor:pointer;font-weight:600" onclick="Nav.tab_('posts')">Open Feed</a>
+      </div>
+      <div id="home-pulse-box" style="margin-bottom:20px">
+        ${pulsePosts.length ? pulsePosts.map(p => `
+          <div class="post-card" style="margin-bottom:10px;cursor:pointer" onclick="Nav.tab_('posts')">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+              ${getAvatarHTML(p.author, 'sm')}
+              <div>
+                <span style="font-size:13px;font-weight:700">${esc(p.author.name)}</span>
+                <span style="font-size:11.5px;color:var(--kr-mut)"> · ${esc(fmtWhen(p.createdAt))}</span>
+              </div>
+            </div>
+            <div style="font-size:13.5px;line-height:1.4;margin-bottom:6px">${esc((p.text || '').slice(0, 140))}</div>
+            <div style="font-size:12px;color:var(--kr-mut)">❤️ ${p.likesCount || 0} likes · 💬 ${p.commentsCount || 0} comments</div>
+          </div>
+        `).join('') : `
+          <div class="card" style="padding:16px;border-radius:14px;text-align:center;color:var(--kr-mut);font-size:13px">
+            No posts yet. Be the first to share an update on KLYRO Pulse!
+          </div>
+        `}
+      </div>
+
+      <!-- 6. DAILY MISSIONS -->
+      <div class="card" style="padding:16px;border-radius:18px;border:1px solid var(--kr-line);background:var(--kr-elev)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-weight:800;font-size:14px">🎯 Daily Missions</div>
+          <span style="font-size:11.5px;color:var(--kr-ok);font-weight:700">+100 XP Bonus</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+            <span>Play 1 Arcade Match</span>
+            <span style="color:var(--kr-brand);font-weight:700">0 / 1</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+            <span>Share a post on Pulse</span>
+            <span style="color:var(--kr-brand);font-weight:700">0 / 1</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+            <span>Send a message to a friend</span>
+            <span style="color:var(--kr-ok);font-weight:700">✓ Done</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
 }

@@ -126,8 +126,13 @@
       <input id="main-search" placeholder="Search chats, people, messages…" autocomplete="off">
     </div>
 
+    <!-- TAB 0: HOME COMMAND CENTER -->
+    <section class="panel active" id="tab-home">
+      <div class="scroll" id="home-content"></div>
+    </section>
+
     <!-- TAB 1: CHATS -->
-    <section class="panel active" id="tab-chats">
+    <section class="panel" id="tab-chats">
       <div class="scroll">
         <div id="stories-strip" class="story-strip"></div>
         <div id="chat-list"></div>
@@ -156,14 +161,36 @@
       </div>
     </section>
 
-    <!-- TAB 3: DISCOVER / PEOPLE -->
+    <!-- TAB 3: PULSE / PUBLIC POSTS -->
+    <section class="panel" id="tab-posts">
+      <div class="scroll">
+        <!-- Feed Filter Control -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 6px">
+          <div class="seg-ctrl" style="display:flex;background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:12px;padding:3px;gap:2px">
+            <button class="seg-btn active" data-post-tab="latest" onclick="PostsEngine.feedTab='latest';renderPosts()">Latest</button>
+            <button class="seg-btn" data-post-tab="pulse" onclick="PostsEngine.feedTab='pulse';renderPosts()">⚡ Pulse</button>
+            <button class="seg-btn" data-post-tab="saved" onclick="PostsEngine.feedTab='saved';renderPosts()">Saved</button>
+          </div>
+          <button class="btn sm" onclick="openPostComposer()" style="font-size:12.5px;height:32px;padding:0 12px">＋ New Post</button>
+        </div>
+
+        <div id="posts-feed" style="padding:8px 14px 24px"></div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ARCADE -->
+    <section class="panel" id="tab-arcade">
+      <div class="scroll" id="arcade-content"></div>
+    </section>
+
+    <!-- TAB 5: DISCOVER / PEOPLE -->
     <section class="panel" id="tab-people">
       <div class="scroll">
         <div id="people-list"></div>
       </div>
     </section>
 
-    <!-- TAB 4: SETTINGS -->
+    <!-- TAB 6: SETTINGS -->
     <section class="panel" id="tab-settings">
       <div class="scroll">
         <div id="settings-list"></div>
@@ -175,23 +202,27 @@
     </button>
 
     <nav class="kr-nav">
-      <button class="nav-item active" id="nav-chats" data-tab="chats">
+      <button class="nav-item active" id="nav-home" data-tab="home">
+        <svg viewBox="0 0 24 24"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6h-6v6H4a1 1 0 01-1-1v-9.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-item" id="nav-chats" data-tab="chats">
         <span class="pill" id="badge-chats" style="display:none">0</span>
         <svg viewBox="0 0 24 24"><path d="M20 3H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V5a2 2 0 00-2-2z"/></svg>
         <span>Chats</span>
       </button>
-      <button class="nav-item" id="nav-status" data-tab="status">
-        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8zm1-13h-2v6l5 3 1-1.7-4-2.3z"/></svg>
-        <span>Status</span>
+      <button class="nav-item" id="nav-posts" data-tab="posts">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Pulse</span>
+      </button>
+      <button class="nav-item" id="nav-arcade" data-tab="arcade">
+        <svg viewBox="0 0 24 24"><path d="M6 11h4m-2-2v4m8-3a1 1 0 11-2 0 1 1 0 012 0zm3 3a1 1 0 11-2 0 1 1 0 012 0zM6 19h12a4 4 0 004-4v-4a4 4 0 00-4-4H6a4 4 0 00-4 4v4a4 4 0 004 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Arcade</span>
       </button>
       <button class="nav-item" id="nav-people" data-tab="people">
         <span class="pill" id="badge-people-online" style="display:none;background:var(--kr-ok)">0</span>
         <svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 10-4-4 4 4 0 004 4zm-8 1a3 3 0 10-3-3 3 3 0 003 3zm0 2c-2.3 0-7 1.2-7 3.5V20h8v-2.5c0-.9.4-1.8 1.1-2.5A12 12 0 008 14zm8 0c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z"/></svg>
         <span>Discover</span>
-      </button>
-      <button class="nav-item" id="nav-settings" data-tab="settings">
-        <svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 000-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 00-1.7-1L15 3H9l-.3 2.8a7.6 7.6 0 00-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 000 2l-2.1 1.6 2 3.5 2.5-1a7.6 7.6 0 001.7 1L9 21h6l.3-2.8a7.6 7.6 0 001.7-1l2.5 1 2-3.5zM12 15.5A3.5 3.5 0 1115.5 12 3.5 3.5 0 0112 15.5z"/></svg>
-        <span>Settings</span>
       </button>
     </nav>
   </div>
@@ -323,6 +354,11 @@
   </div>
 </div>
 
+<!-- ARCADE MULTIPLAYER GAME MODAL -->
+<div class="ov center" id="ov-arcade-game">
+  <div id="arcade-game-view" style="width:100%;max-width:440px"></div>
+</div>
+
 <div id="upload-bar">
   <div style="font-size:18px">⬆️</div>
   <div class="ubx">
@@ -331,6 +367,33 @@
     <div class="bar" style="margin-top:6px"><i id="ub-progress"></i></div>
   </div>
   <button class="ib" id="ub-cancel" aria-label="Cancel transfer">✕</button>
+</div>
+
+<!-- Non-intrusive game challenge toast -->
+<div id="game-challenge-toast" class="challenge-toast" role="alert" aria-live="assertive">
+  <div class="ct-progress-bar"><div class="ct-progress-fill" id="ct-progress"></div></div>
+  <div class="ct-body">
+    <div class="ct-avatar-wrap">
+      <img id="ct-avatar-img" class="ct-avatar" src="" alt="Challenger Avatar" style="display:none">
+      <div id="ct-avatar-fallback" class="ct-avatar-fallback">🎮</div>
+      <span id="ct-badge-icon" class="ct-badge-icon">🎲</span>
+    </div>
+    <div class="ct-content">
+      <div class="ct-header">
+        <span class="ct-title" id="ct-title">Direct Challenge</span>
+        <span class="ct-time">Just now</span>
+      </div>
+      <div class="ct-desc" id="ct-desc"><strong>Alex</strong> challenged you to <strong>Speed Chess</strong></div>
+      <div class="ct-note" id="ct-note">Tap Accept to jump straight into the lobby!</div>
+    </div>
+    <div class="ct-actions">
+      <button type="button" class="ct-btn-accept" id="ct-accept-btn">
+        <span class="ct-btn-icon">⚡</span>
+        <span>Accept</span>
+      </button>
+      <button type="button" class="ct-btn-close" id="ct-close-btn" aria-label="Dismiss challenge">✕</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast"></div>

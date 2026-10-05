@@ -179,7 +179,11 @@ const KLYRO_CONFIG = {
     /* Status media is stored in RTDB, so strict limits are enforced */
     storyImage: 620 * 1024,            // max bytes of encoded base64
     storyVideo: 1.8 * 1024 * 1024,     // max bytes for short status video (<=15s)
-    inlineBytes: 48 * 1024             // below this inline directly in RTDB
+    inlineBytes: 48 * 1024,            // below this inline directly in RTDB
+    /* Public Feed Media Limits (Safe for RTDB, no paid storage required) */
+    postPhoto: 120 * 1024,             // max base64 bytes for public post photo
+    postAudio: 180 * 1024,             // max base64 bytes for public post audio clip (<=30s)
+    postVideo: 380 * 1024              // max base64 bytes for public post preview clip (<=10s)
   },
 
   cache: { maxBytes: 320 * 1024 * 1024 },

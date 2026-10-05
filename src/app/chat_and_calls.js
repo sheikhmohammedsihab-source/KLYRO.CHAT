@@ -211,7 +211,18 @@ function openChat(targetId, type, cid) {
 
   listen('chat:pins', 'pins/' + cid, 'value', sn => { ST.pinned = sn.val() || {}; });
 
+  // Save current chat draft before switching
+  if (ST.chat && s('chat-input')) {
+    try { localStorage.setItem('klyro_draft_' + ST.chat.cid, s('chat-input').value); } catch (e) {}
+  }
+
   Nav.go('chat', { targetId: targetId, type: type, cid: cid });
+
+  // Restore draft for this chat
+  if (s('chat-input')) {
+    try { s('chat-input').value = localStorage.getItem('klyro_draft_' + cid) || ''; } catch (e) {}
+  }
+
   setTimeout(() => scrollToBottom(), 80);
 }
 
@@ -316,6 +327,20 @@ function bodyHTML(m) {
     `;
   }
   if (m.type === 'sticker') return `<div style="font-size:46px;line-height:1.1">${esc(m.sticker || '🙂')}</div>`;
+  if (m.type === 'game_invite') {
+    const isMine = m.sender === ST.me.uid;
+    const gameNames = { ludo: '🎲 Ludo Club', chess: '♟️ Speed Chess', carrom: '🎯 Carrom Strike' };
+    const title = gameNames[m.gameType] || '🎮 Arcade Match';
+    return `
+      <div class="game-invite-card" style="min-width:210px;padding:6px 2px">
+        <div style="font-weight:700;font-size:14px;margin-bottom:3px">${title}</div>
+        <div style="font-size:12.5px;opacity:0.9;margin-bottom:10px">${esc(m.text || 'Challenged you to a game!')}</div>
+        <button class="btn sm" onclick="ArcadeEngine.joinRoom('${esc(m.gameType)}', '${esc(m.roomId)}')" style="width:100%;background:#fff;color:var(--kr-brand);font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.15)">
+          ${isMine ? 'Open Game Room' : 'Accept & Play'}
+        </button>
+      </div>
+    `;
+  }
   if (m.type === 'poll' && m.poll) return pollHTML(m);
   if (['image','video','audio','voice','file'].indexOf(m.type) >= 0) {
     const md = m.media || {};

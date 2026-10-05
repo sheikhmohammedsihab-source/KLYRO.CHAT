@@ -8,16 +8,19 @@
    ================================================================================== */
 
 const StatusEngine = {
-  cache: {},       // uid → [ { id, ... } ]
-  indexSlots: {},  // uid → listener slot
+  authCache: {},       // uid → { [statusId]: fullAuthoritativeRecord }
+  indexCache: {},      // uid → { [statusId]: lightweightIndexRecord }
+  indexSlots: {},      // uid → listener slot
   activeStory: null,
 
   init() {
-    this.cache = {};
+    this.authCache = {};
+    this.indexCache = {};
+    this.indexSlots = {};
     if (!ST.me) return;
-    /* 1. Listen to self status */
-    this.subscribeUser(ST.me.uid);
-    /* 2. Listen to all contacts */
+    /* 1. Listen directly to authoritative status for current user */
+    this.subscribeSelf(ST.me.uid);
+    /* 2. Listen to all contacts via lightweight index */
     Object.keys(ST.me.contacts || {}).forEach(uid => this.subscribeUser(uid));
     /* 3. Listen to public statusIndex root */
     listen('status:index_root', 'statusIndex', 'child_added', sn => {
@@ -32,65 +35,114 @@ const StatusEngine = {
   teardown() {
     unlistenAll('status:');
     this.indexSlots = {};
-    this.cache = {};
+    this.authCache = {};
+    this.indexCache = {};
+  },
+
+  subscribeSelf(uid) {
+    if (!uid) return;
+    this.indexSlots[uid] = true;
+    /* Authoritative live listener for own status */
+    listen('status:self:' + uid, 'status/' + uid, 'value', sn => {
+      const all = sn.val() || {};
+      const active = {};
+      const t = now();
+      Object.keys(all).forEach(id => {
+        const item = Object.assign({ id: id, ownerUid: uid }, all[id]);
+        if (!item.expiresAt || item.expiresAt > t) {
+          active[id] = item;
+        }
+      });
+      this.authCache[uid] = active;
+      renderStatus();
+    });
   },
 
   subscribeUser(uid) {
     if (!uid || this.indexSlots[uid]) return;
     this.indexSlots[uid] = true;
+
+    /* If it is self, subscribeSelf handles authoritative data */
+    if (ST.me && uid === ST.me.uid) {
+      this.subscribeSelf(uid);
+      return;
+    }
     
-    /* Listen to the lightweight index */
+    /* Listen to lightweight status index */
     listen('status:idx:' + uid, 'statusIndex/' + uid, 'value', sn => {
       const all = sn.val() || {};
-      const active = [];
+      const active = {};
       const t = now();
       Object.keys(all).forEach(id => {
         const item = Object.assign({ id: id, ownerUid: uid }, all[id]);
         if (!item.expiresAt || item.expiresAt > t) {
-          active.push(item);
+          active[id] = item;
+          // Pre-fetch authoritative record if not yet cached or if updated
+          if (!this.authCache[uid] || !this.authCache[uid][id] || this.authCache[uid][id].ts !== item.ts) {
+            this.fetchAuthoritative(uid, id);
+          }
         }
       });
-      active.sort((a, b) => (a.ts || 0) - (b.ts || 0));
-      this.cache[uid] = active;
+      this.indexCache[uid] = active;
       renderStatus();
     });
 
     /* Also check legacy stories if statusIndex is empty */
     db.ref('stories/' + uid).limitToLast(10).once('value').then(sn => {
       const all = sn.val() || {};
-      const current = this.cache[uid] || [];
       const t = now();
       let added = false;
+      if (!this.authCache[uid]) this.authCache[uid] = {};
       Object.keys(all).forEach(id => {
-        if (!current.some(x => x.id === id)) {
+        if (!this.authCache[uid][id]) {
           const item = Object.assign({ id: id, ownerUid: uid }, all[id]);
           if (!item.expiresAt || item.expiresAt > t) {
-            current.push(item);
+            this.authCache[uid][id] = item;
             added = true;
           }
         }
       });
-      if (added) {
-        current.sort((a, b) => (a.ts || 0) - (b.ts || 0));
-        this.cache[uid] = current;
-        renderStatus();
-      }
+      if (added) renderStatus();
     }).catch(() => {});
   },
 
   /* Fetch the authoritative full media record if only index metadata was cached */
   async fetchAuthoritative(ownerUid, statusId) {
-    let rec = await db.ref('status/' + ownerUid + '/' + statusId).once('value').then(s => s.val());
-    if (!rec) {
-      rec = await db.ref('stories/' + ownerUid + '/' + statusId).once('value').then(s => s.val());
+    try {
+      let rec = await db.ref('status/' + ownerUid + '/' + statusId).once('value').then(s => s.val());
+      if (!rec) {
+        rec = await db.ref('stories/' + ownerUid + '/' + statusId).once('value').then(s => s.val());
+      }
+      if (rec) {
+        if (!this.authCache[ownerUid]) this.authCache[ownerUid] = {};
+        this.authCache[ownerUid][statusId] = Object.assign({ id: statusId, ownerUid: ownerUid }, rec);
+        renderStatus();
+      }
+      return rec ? Object.assign({ id: statusId, ownerUid: ownerUid }, rec) : null;
+    } catch (e) {
+      return null;
     }
-    return rec ? Object.assign({ id: statusId, ownerUid: ownerUid }, rec) : null;
   },
 
   getLiveStories(uid) {
-    const list = this.cache[uid] || [];
     const t = now();
-    return list.filter(x => !x.expiresAt || x.expiresAt > t);
+    const authMap = this.authCache[uid] || {};
+    const indexMap = this.indexCache[uid] || {};
+    const allIds = Array.from(new Set(Object.keys(authMap).concat(Object.keys(indexMap))));
+
+    const merged = [];
+    allIds.forEach(id => {
+      const authItem = authMap[id];
+      const indexItem = indexMap[id];
+      // Merge: authItem takes priority over indexItem so full text/data/caption/views are never lost!
+      const item = Object.assign({}, indexItem || {}, authItem || {});
+      if (!item.expiresAt || item.expiresAt > t) {
+        merged.push(item);
+      }
+    });
+
+    merged.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    return merged;
   },
 
   isAudienceAllowed(owner, viewerUid) {
@@ -107,13 +159,23 @@ const StatusEngine = {
       if (!ST.me || document.hidden) return;
       const t = now();
       let changed = false;
-      Object.keys(this.cache).forEach(uid => {
-        const prev = this.cache[uid] || [];
-        const filtered = prev.filter(x => !x.expiresAt || x.expiresAt > t);
-        if (filtered.length !== prev.length) {
-          this.cache[uid] = filtered;
-          changed = true;
-        }
+      Object.keys(this.authCache).forEach(uid => {
+        const map = this.authCache[uid] || {};
+        Object.keys(map).forEach(id => {
+          if (map[id].expiresAt && map[id].expiresAt <= t) {
+            delete map[id];
+            changed = true;
+          }
+        });
+      });
+      Object.keys(this.indexCache).forEach(uid => {
+        const map = this.indexCache[uid] || {};
+        Object.keys(map).forEach(id => {
+          if (map[id].expiresAt && map[id].expiresAt <= t) {
+            delete map[id];
+            changed = true;
+          }
+        });
       });
       if (changed) renderStatus();
     }, 10 * 60 * 1000);
@@ -371,9 +433,10 @@ async function postStatus(chosen, text, bg) {
     await db.ref().update(updates);
 
     /* Update memory cache immediately */
-    const current = StatusEngine.cache[ST.me.uid] || [];
-    current.push(Object.assign({ id: statusId, ownerUid: ST.me.uid }, fullRecord));
-    StatusEngine.cache[ST.me.uid] = current;
+    if (!StatusEngine.authCache[ST.me.uid]) StatusEngine.authCache[ST.me.uid] = {};
+    if (!StatusEngine.indexCache[ST.me.uid]) StatusEngine.indexCache[ST.me.uid] = {};
+    StatusEngine.authCache[ST.me.uid][statusId] = Object.assign({ id: statusId, ownerUid: ST.me.uid }, fullRecord);
+    StatusEngine.indexCache[ST.me.uid][statusId] = Object.assign({ id: statusId, ownerUid: ST.me.uid }, indexRecord);
 
     Nav.close('ov-compose');
     renderStatus();
@@ -401,8 +464,8 @@ function deleteStatus(statusId) {
   updates['stories/' + ST.me.uid + '/' + statusId] = null;
   
   db.ref().update(updates).then(() => {
-    const list = StatusEngine.cache[ST.me.uid] || [];
-    StatusEngine.cache[ST.me.uid] = list.filter(x => x.id !== statusId);
+    if (StatusEngine.authCache[ST.me.uid]) delete StatusEngine.authCache[ST.me.uid][statusId];
+    if (StatusEngine.indexCache[ST.me.uid]) delete StatusEngine.indexCache[ST.me.uid][statusId];
     toast('Status deleted');
     renderStatus();
   }).catch(() => toast('Could not delete status.'));

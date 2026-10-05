@@ -1912,6 +1912,148 @@ textarea.inp {
   background: var(--kr-brand);
 }
 
+/* ============================ POSTS & PULSE STYLES ============================ */
+.seg-ctrl {
+  display: flex;
+  background: var(--kr-bg2);
+  border: 1px solid var(--kr-line);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.seg-btn {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kr-mut);
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.15s var(--kr-ease);
+}
+
+.seg-btn.active {
+  background: var(--kr-elev);
+  color: var(--kr-txt);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.post-card {
+  background: var(--kr-elev);
+  border: 1px solid var(--kr-line);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--kr-sh);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.post-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.post-meta .author-name {
+  font-size: 14.5px;
+  color: var(--kr-txt);
+}
+
+.post-meta .author-handle {
+  font-size: 12px;
+  color: var(--kr-mut);
+}
+
+.post-content {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--kr-txt);
+  word-break: break-word;
+  white-space: pre-line;
+}
+
+.post-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--kr-line2);
+}
+
+.post-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: var(--kr-mut);
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.post-action-btn:hover {
+  background: var(--kr-bg2);
+  color: var(--kr-txt);
+}
+
+.post-action-btn.liked {
+  color: #E11D48;
+}
+
+.post-action-btn.saved {
+  color: var(--kr-brand);
+}
+
+.like-icon.pop-anim {
+  animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes heartPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+
+/* ============================ ARCADE & GAME STYLES ============================ */
+.arcade-card {
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
+}
+
+.arcade-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.game-invite-card {
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(124, 58, 237, 0.12));
+  border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+#ludo-dice-btn.rolling {
+  animation: diceSpin 0.4s ease-in-out infinite;
+}
+
+@keyframes diceSpin {
+  0% { transform: rotate(0deg) scale(1.05); }
+  50% { transform: rotate(180deg) scale(0.95); }
+  100% { transform: rotate(360deg) scale(1.05); }
+}
+
+
 </style>
 </head>
 <body>
@@ -2073,14 +2215,36 @@ textarea.inp {
       </div>
     </section>
 
-    <!-- TAB 3: DISCOVER / PEOPLE -->
+    <!-- TAB 3: PULSE / PUBLIC POSTS -->
+    <section class="panel" id="tab-posts">
+      <div class="scroll">
+        <!-- Feed Filter Control -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 6px">
+          <div class="seg-ctrl" style="display:flex;background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:12px;padding:3px;gap:2px">
+            <button class="seg-btn active" data-post-tab="latest" onclick="PostsEngine.feedTab='latest';renderPosts()">Latest</button>
+            <button class="seg-btn" data-post-tab="pulse" onclick="PostsEngine.feedTab='pulse';renderPosts()">⚡ Pulse</button>
+            <button class="seg-btn" data-post-tab="saved" onclick="PostsEngine.feedTab='saved';renderPosts()">Saved</button>
+          </div>
+          <button class="btn sm" onclick="openPostComposer()" style="font-size:12.5px;height:32px;padding:0 12px">＋ New Post</button>
+        </div>
+
+        <div id="posts-feed" style="padding:8px 14px 24px"></div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ARCADE -->
+    <section class="panel" id="tab-arcade">
+      <div class="scroll" id="arcade-content"></div>
+    </section>
+
+    <!-- TAB 5: DISCOVER / PEOPLE -->
     <section class="panel" id="tab-people">
       <div class="scroll">
         <div id="people-list"></div>
       </div>
     </section>
 
-    <!-- TAB 4: SETTINGS -->
+    <!-- TAB 6: SETTINGS -->
     <section class="panel" id="tab-settings">
       <div class="scroll">
         <div id="settings-list"></div>
@@ -2101,14 +2265,18 @@ textarea.inp {
         <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 01-8 8zm1-13h-2v6l5 3 1-1.7-4-2.3z"/></svg>
         <span>Status</span>
       </button>
+      <button class="nav-item" id="nav-posts" data-tab="posts">
+        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Pulse</span>
+      </button>
+      <button class="nav-item" id="nav-arcade" data-tab="arcade">
+        <svg viewBox="0 0 24 24"><path d="M6 11h4m-2-2v4m8-3a1 1 0 11-2 0 1 1 0 012 0zm3 3a1 1 0 11-2 0 1 1 0 012 0zM6 19h12a4 4 0 004-4v-4a4 4 0 00-4-4H6a4 4 0 00-4 4v4a4 4 0 004 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>Arcade</span>
+      </button>
       <button class="nav-item" id="nav-people" data-tab="people">
         <span class="pill" id="badge-people-online" style="display:none;background:var(--kr-ok)">0</span>
         <svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 10-4-4 4 4 0 004 4zm-8 1a3 3 0 10-3-3 3 3 0 003 3zm0 2c-2.3 0-7 1.2-7 3.5V20h8v-2.5c0-.9.4-1.8 1.1-2.5A12 12 0 008 14zm8 0c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z"/></svg>
         <span>Discover</span>
-      </button>
-      <button class="nav-item" id="nav-settings" data-tab="settings">
-        <svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 000-2l2.1-1.6-2-3.5-2.5 1a7.6 7.6 0 00-1.7-1L15 3H9l-.3 2.8a7.6 7.6 0 00-1.7 1l-2.5-1-2 3.5L4.6 11a7.6 7.6 0 000 2l-2.1 1.6 2 3.5 2.5-1a7.6 7.6 0 001.7 1L9 21h6l.3-2.8a7.6 7.6 0 001.7-1l2.5 1 2-3.5zM12 15.5A3.5 3.5 0 1115.5 12 3.5 3.5 0 0112 15.5z"/></svg>
-        <span>Settings</span>
       </button>
     </nav>
   </div>
@@ -2238,6 +2406,11 @@ textarea.inp {
   <div class="card pad" id="onboarding-card" style="max-width:440px">
     <!-- content rendered dynamically by showFirstRunOnboarding() -->
   </div>
+</div>
+
+<!-- ARCADE MULTIPLAYER GAME MODAL -->
+<div class="ov center" id="ov-arcade-game">
+  <div id="arcade-game-view" style="width:100%;max-width:440px"></div>
 </div>
 
 <div id="upload-bar">
@@ -2444,7 +2617,11 @@ const KLYRO_CONFIG = {
     /* Status media is stored in RTDB, so strict limits are enforced */
     storyImage: 620 * 1024,            // max bytes of encoded base64
     storyVideo: 1.8 * 1024 * 1024,     // max bytes for short status video (<=15s)
-    inlineBytes: 48 * 1024             // below this inline directly in RTDB
+    inlineBytes: 48 * 1024,            // below this inline directly in RTDB
+    /* Public Feed Media Limits (Safe for RTDB, no paid storage required) */
+    postPhoto: 120 * 1024,             // max base64 bytes for public post photo
+    postAudio: 180 * 1024,             // max base64 bytes for public post audio clip (<=30s)
+    postVideo: 380 * 1024              // max base64 bytes for public post preview clip (<=10s)
   },
 
   cache: { maxBytes: 320 * 1024 * 1024 },
@@ -2558,6 +2735,7 @@ const AuthState = {
   AUTHENTICATING: 'AUTHENTICATING',
   SIGNED_IN_PROFILE_LOADING: 'SIGNED_IN_PROFILE_LOADING',
   PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
+  ONBOARDING: 'ONBOARDING',
   READY: 'READY',
   current: 'BOOTING',
 
@@ -2569,6 +2747,7 @@ const AuthState = {
         Nav.go('loading', null, { replace: true });
         break;
       case this.SIGNED_OUT:
+        Nav.closeAllOverlays();
         Nav.go('auth', null, { replace: true, force: true });
         switchAuth('login');
         break;
@@ -2583,7 +2762,11 @@ const AuthState = {
       case this.PROFILE_INCOMPLETE:
         showSetupProfile();
         break;
+      case this.ONBOARDING:
+        showFirstRunOnboarding(meta);
+        break;
       case this.READY:
+        Nav.closeAllOverlays();
         Nav.go('main', { tab: Nav.tab || 'chats' }, { replace: true });
         break;
     }
@@ -2614,7 +2797,13 @@ const ST = {
   uploads: {},
   transferMeta: {},
   drafts: {},
-  onlinePool: {}
+  onlinePool: {},
+  posts: {},
+  postLikes: {},
+  postComments: {},
+  userSaves: {},
+  arcadeGames: {},
+  activeGame: null
 };
 window.KLYRO_DEBUG = false;
 
@@ -2678,13 +2867,15 @@ const Nav = {
   _renderTab() {
     $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + this.tab));
     $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === this.tab));
-    const titles = { chats: 'Chats', status: 'Status', people: 'Discover', settings: 'Settings' };
+    const titles = { chats: 'Chats', status: 'Status', posts: 'Pulse', arcade: 'Arcade', people: 'Discover', settings: 'Settings' };
     if (s('main-title')) s('main-title').textContent = titles[this.tab] || 'KLYRO';
-    if (s('search-wrap')) s('search-wrap').style.display = (this.tab === 'chats' || this.tab === 'people') ? 'block' : 'none';
-    if (s('fab')) s('fab').style.display = (this.tab === 'chats' || this.tab === 'people' || this.tab === 'status') ? 'flex' : 'none';
+    if (s('search-wrap')) s('search-wrap').style.display = (this.tab === 'chats' || this.tab === 'people' || this.tab === 'posts') ? 'block' : 'none';
+    if (s('fab')) s('fab').style.display = (this.tab === 'chats' || this.tab === 'people' || this.tab === 'status' || this.tab === 'posts') ? 'flex' : 'none';
     
     if (this.tab === 'chats') renderChats();
     if (this.tab === 'status') renderStatus();
+    if (this.tab === 'posts' && typeof renderPosts === 'function') renderPosts();
+    if (this.tab === 'arcade' && typeof renderArcade === 'function') renderArcade();
     if (this.tab === 'people') renderPeople();
     if (this.tab === 'settings') renderSettings();
   },
@@ -2719,6 +2910,15 @@ const Nav = {
     if (id === 'ov-story' && typeof StoryViewer !== 'undefined' && StoryViewer.stop) {
       StoryViewer.stop();
     }
+  },
+
+  closeAllOverlays() {
+    while (this.overlays.length) {
+      const id = this.overlays.pop();
+      const el = s(id);
+      if (el) el.classList.remove('open');
+    }
+    document.body.style.overflow = '';
   },
 
   closeTop() {
@@ -3874,6 +4074,7 @@ function votePoll(key, index) {
 function openAttachSheet() {
   const hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   openSheet('Send Attachment', [
+    { icon: '🎮', label: 'Play Game', sub: 'Ludo, Chess or Carrom', run: openGameChallengeMenu },
     { icon: '🖼️', label: 'Photo', sub: 'High-quality compressed photo', run: () => pickFile('image') },
     { icon: '🎬', label: 'Video', sub: 'Fast P2P video transfer', run: () => pickFile('video') },
     { icon: '🎵', label: 'Audio file', run: () => pickFile('audio') },
@@ -3884,6 +4085,17 @@ function openAttachSheet() {
     { icon: '📍', label: 'Location', sub: 'Share current GPS location', run: shareLocation },
     { icon: '📷', label: 'Camera', sub: hasCamera ? 'Take photo now' : 'Unavailable', disabled: !hasCamera, run: capturePhoto },
     { icon: '📝', label: 'New status', sub: 'Post 24h status update', run: openStatusComposer }
+  ]);
+}
+
+function openGameChallengeMenu() {
+  if (!ST.chat) return;
+  const targetUid = ST.chat.targetId;
+  openSheet('Challenge to Arcade Game', [
+    { icon: '🎲', label: 'Play Ludo (2 Players)', run: () => ArcadeEngine.sendGameChallenge('ludo', targetUid) },
+    { icon: '🎲', label: 'Play Ludo (4 Players)', run: () => ArcadeEngine.sendGameChallenge('ludo', targetUid) },
+    { icon: '♟️', label: 'Play Speed Chess', run: () => ArcadeEngine.sendGameChallenge('chess', targetUid) },
+    { icon: '🎯', label: 'Play Carrom Strike', run: () => ArcadeEngine.sendGameChallenge('carrom', targetUid) }
   ]);
 }
 
@@ -4705,16 +4917,19 @@ function wireMessageEvents() {
    ================================================================================== */
 
 const StatusEngine = {
-  cache: {},       // uid → [ { id, ... } ]
-  indexSlots: {},  // uid → listener slot
+  authCache: {},       // uid → { [statusId]: fullAuthoritativeRecord }
+  indexCache: {},      // uid → { [statusId]: lightweightIndexRecord }
+  indexSlots: {},      // uid → listener slot
   activeStory: null,
 
   init() {
-    this.cache = {};
+    this.authCache = {};
+    this.indexCache = {};
+    this.indexSlots = {};
     if (!ST.me) return;
-    /* 1. Listen to self status */
-    this.subscribeUser(ST.me.uid);
-    /* 2. Listen to all contacts */
+    /* 1. Listen directly to authoritative status for current user */
+    this.subscribeSelf(ST.me.uid);
+    /* 2. Listen to all contacts via lightweight index */
     Object.keys(ST.me.contacts || {}).forEach(uid => this.subscribeUser(uid));
     /* 3. Listen to public statusIndex root */
     listen('status:index_root', 'statusIndex', 'child_added', sn => {
@@ -4729,65 +4944,114 @@ const StatusEngine = {
   teardown() {
     unlistenAll('status:');
     this.indexSlots = {};
-    this.cache = {};
+    this.authCache = {};
+    this.indexCache = {};
+  },
+
+  subscribeSelf(uid) {
+    if (!uid) return;
+    this.indexSlots[uid] = true;
+    /* Authoritative live listener for own status */
+    listen('status:self:' + uid, 'status/' + uid, 'value', sn => {
+      const all = sn.val() || {};
+      const active = {};
+      const t = now();
+      Object.keys(all).forEach(id => {
+        const item = Object.assign({ id: id, ownerUid: uid }, all[id]);
+        if (!item.expiresAt || item.expiresAt > t) {
+          active[id] = item;
+        }
+      });
+      this.authCache[uid] = active;
+      renderStatus();
+    });
   },
 
   subscribeUser(uid) {
     if (!uid || this.indexSlots[uid]) return;
     this.indexSlots[uid] = true;
+
+    /* If it is self, subscribeSelf handles authoritative data */
+    if (ST.me && uid === ST.me.uid) {
+      this.subscribeSelf(uid);
+      return;
+    }
     
-    /* Listen to the lightweight index */
+    /* Listen to lightweight status index */
     listen('status:idx:' + uid, 'statusIndex/' + uid, 'value', sn => {
       const all = sn.val() || {};
-      const active = [];
+      const active = {};
       const t = now();
       Object.keys(all).forEach(id => {
         const item = Object.assign({ id: id, ownerUid: uid }, all[id]);
         if (!item.expiresAt || item.expiresAt > t) {
-          active.push(item);
+          active[id] = item;
+          // Pre-fetch authoritative record if not yet cached or if updated
+          if (!this.authCache[uid] || !this.authCache[uid][id] || this.authCache[uid][id].ts !== item.ts) {
+            this.fetchAuthoritative(uid, id);
+          }
         }
       });
-      active.sort((a, b) => (a.ts || 0) - (b.ts || 0));
-      this.cache[uid] = active;
+      this.indexCache[uid] = active;
       renderStatus();
     });
 
     /* Also check legacy stories if statusIndex is empty */
     db.ref('stories/' + uid).limitToLast(10).once('value').then(sn => {
       const all = sn.val() || {};
-      const current = this.cache[uid] || [];
       const t = now();
       let added = false;
+      if (!this.authCache[uid]) this.authCache[uid] = {};
       Object.keys(all).forEach(id => {
-        if (!current.some(x => x.id === id)) {
+        if (!this.authCache[uid][id]) {
           const item = Object.assign({ id: id, ownerUid: uid }, all[id]);
           if (!item.expiresAt || item.expiresAt > t) {
-            current.push(item);
+            this.authCache[uid][id] = item;
             added = true;
           }
         }
       });
-      if (added) {
-        current.sort((a, b) => (a.ts || 0) - (b.ts || 0));
-        this.cache[uid] = current;
-        renderStatus();
-      }
+      if (added) renderStatus();
     }).catch(() => {});
   },
 
   /* Fetch the authoritative full media record if only index metadata was cached */
   async fetchAuthoritative(ownerUid, statusId) {
-    let rec = await db.ref('status/' + ownerUid + '/' + statusId).once('value').then(s => s.val());
-    if (!rec) {
-      rec = await db.ref('stories/' + ownerUid + '/' + statusId).once('value').then(s => s.val());
+    try {
+      let rec = await db.ref('status/' + ownerUid + '/' + statusId).once('value').then(s => s.val());
+      if (!rec) {
+        rec = await db.ref('stories/' + ownerUid + '/' + statusId).once('value').then(s => s.val());
+      }
+      if (rec) {
+        if (!this.authCache[ownerUid]) this.authCache[ownerUid] = {};
+        this.authCache[ownerUid][statusId] = Object.assign({ id: statusId, ownerUid: ownerUid }, rec);
+        renderStatus();
+      }
+      return rec ? Object.assign({ id: statusId, ownerUid: ownerUid }, rec) : null;
+    } catch (e) {
+      return null;
     }
-    return rec ? Object.assign({ id: statusId, ownerUid: ownerUid }, rec) : null;
   },
 
   getLiveStories(uid) {
-    const list = this.cache[uid] || [];
     const t = now();
-    return list.filter(x => !x.expiresAt || x.expiresAt > t);
+    const authMap = this.authCache[uid] || {};
+    const indexMap = this.indexCache[uid] || {};
+    const allIds = Array.from(new Set(Object.keys(authMap).concat(Object.keys(indexMap))));
+
+    const merged = [];
+    allIds.forEach(id => {
+      const authItem = authMap[id];
+      const indexItem = indexMap[id];
+      // Merge: authItem takes priority over indexItem so full text/data/caption/views are never lost!
+      const item = Object.assign({}, indexItem || {}, authItem || {});
+      if (!item.expiresAt || item.expiresAt > t) {
+        merged.push(item);
+      }
+    });
+
+    merged.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    return merged;
   },
 
   isAudienceAllowed(owner, viewerUid) {
@@ -4804,13 +5068,23 @@ const StatusEngine = {
       if (!ST.me || document.hidden) return;
       const t = now();
       let changed = false;
-      Object.keys(this.cache).forEach(uid => {
-        const prev = this.cache[uid] || [];
-        const filtered = prev.filter(x => !x.expiresAt || x.expiresAt > t);
-        if (filtered.length !== prev.length) {
-          this.cache[uid] = filtered;
-          changed = true;
-        }
+      Object.keys(this.authCache).forEach(uid => {
+        const map = this.authCache[uid] || {};
+        Object.keys(map).forEach(id => {
+          if (map[id].expiresAt && map[id].expiresAt <= t) {
+            delete map[id];
+            changed = true;
+          }
+        });
+      });
+      Object.keys(this.indexCache).forEach(uid => {
+        const map = this.indexCache[uid] || {};
+        Object.keys(map).forEach(id => {
+          if (map[id].expiresAt && map[id].expiresAt <= t) {
+            delete map[id];
+            changed = true;
+          }
+        });
       });
       if (changed) renderStatus();
     }, 10 * 60 * 1000);
@@ -5068,9 +5342,10 @@ async function postStatus(chosen, text, bg) {
     await db.ref().update(updates);
 
     /* Update memory cache immediately */
-    const current = StatusEngine.cache[ST.me.uid] || [];
-    current.push(Object.assign({ id: statusId, ownerUid: ST.me.uid }, fullRecord));
-    StatusEngine.cache[ST.me.uid] = current;
+    if (!StatusEngine.authCache[ST.me.uid]) StatusEngine.authCache[ST.me.uid] = {};
+    if (!StatusEngine.indexCache[ST.me.uid]) StatusEngine.indexCache[ST.me.uid] = {};
+    StatusEngine.authCache[ST.me.uid][statusId] = Object.assign({ id: statusId, ownerUid: ST.me.uid }, fullRecord);
+    StatusEngine.indexCache[ST.me.uid][statusId] = Object.assign({ id: statusId, ownerUid: ST.me.uid }, indexRecord);
 
     Nav.close('ov-compose');
     renderStatus();
@@ -5098,8 +5373,8 @@ function deleteStatus(statusId) {
   updates['stories/' + ST.me.uid + '/' + statusId] = null;
   
   db.ref().update(updates).then(() => {
-    const list = StatusEngine.cache[ST.me.uid] || [];
-    StatusEngine.cache[ST.me.uid] = list.filter(x => x.id !== statusId);
+    if (StatusEngine.authCache[ST.me.uid]) delete StatusEngine.authCache[ST.me.uid][statusId];
+    if (StatusEngine.indexCache[ST.me.uid]) delete StatusEngine.indexCache[ST.me.uid][statusId];
     toast('Status deleted');
     renderStatus();
   }).catch(() => toast('Could not delete status.'));
@@ -5324,6 +5599,1489 @@ const StoryViewer = {
     }));
   }
 };
+
+
+/* ==========================================================================
+   KLYRO — PUBLIC POSTS & "PULSE" / TRENDING SOCIAL EXPERIENCE
+   Features:
+     - Public Posts (Text, Photo, Audio, Short Video Clip)
+     - Feed types: Latest, Pulse / Trending (Velocity ranked), Saved
+     - Likes with spring heart animation & count
+     - Expandable comments with threaded replies
+     - Share to direct chat or copy link
+     - Bookmark / save posts
+     - Report & Hide controls
+     - Pluggable PublicMediaProvider with strict client-side budget constraints
+   ========================================================================== */
+
+const PublicMediaProvider = {
+  async processPhoto(file) {
+    if (!file) return null;
+    const maxBytes = KLYRO_CONFIG.limits.postPhoto || (120 * 1024);
+    try {
+      const compressed = await compressImage(file, 800, 0.72, maxBytes);
+      const b64 = await blobToDataURL(compressed.blob);
+      if (b64.length > maxBytes * 1.35) {
+        throw new Error('Image too detailed for public feed. Please select a simpler photo.');
+      }
+      return { type: 'image', data: b64, size: compressed.blob.size, mime: compressed.blob.type };
+    } catch (err) {
+      throw new Error(err.message || 'Could not process photo');
+    }
+  },
+
+  async processAudio(blob, durationSec) {
+    if (!blob) return null;
+    const maxBytes = KLYRO_CONFIG.limits.postAudio || (180 * 1024);
+    if (blob.size > maxBytes) {
+      throw new Error('Audio clip is too long (maximum 30 seconds for public feed).');
+    }
+    const b64 = await blobToDataURL(blob);
+    return { type: 'audio', data: b64, duration: durationSec || 0, size: blob.size, mime: blob.type };
+  },
+
+  async processVideo(file) {
+    if (!file) return null;
+    const maxBytes = KLYRO_CONFIG.limits.postVideo || (380 * 1024);
+    if (file.size > maxBytes * 1.5) {
+      throw new Error('Video clip too large for public feed (max 10 seconds / 380 KB).');
+    }
+    const b64 = await blobToDataURL(file);
+    return { type: 'video', data: b64, size: file.size, mime: file.type };
+  }
+};
+
+const PostsEngine = {
+  feedTab: 'latest', // 'latest' | 'pulse' | 'saved'
+  postsCache: {},     // postId -> post
+  likesCache: {},     // postId -> boolean (I liked)
+  savesCache: {},     // postId -> boolean (I saved)
+  commentsCache: {},  // postId -> [comments]
+  commentsSlot: null,
+  activePostId: null,
+  subSlot: null,
+  queryLimit: 30,
+
+  init() {
+    this.postsCache = {};
+    this.likesCache = {};
+    this.savesCache = {};
+    if (!ST.me) return;
+
+    /* Listen to user saves */
+    listen('posts:my_saves', 'userSaves/' + ST.me.uid, 'value', sn => {
+      this.savesCache = sn.val() || {};
+      if (this.feedTab === 'saved') renderPosts();
+    });
+
+    /* Listen to recent posts */
+    this.subscribeFeed();
+  },
+
+  teardown() {
+    unlistenAll('posts:');
+    this.postsCache = {};
+    this.likesCache = {};
+  },
+
+  subscribeFeed() {
+    listenLimited('posts:feed', 'posts', 'child_added', sn => {
+      const p = sn.val();
+      if (!p) return;
+      p.id = sn.key;
+      this.postsCache[p.id] = p;
+      this.checkMyLike(p.id);
+      if (Nav.tab === 'posts') renderPosts();
+    }, this.queryLimit);
+
+    listen('posts:feed_change', 'posts', 'child_changed', sn => {
+      const p = sn.val();
+      if (!p) return;
+      p.id = sn.key;
+      this.postsCache[p.id] = Object.assign(this.postsCache[p.id] || {}, p);
+      if (Nav.tab === 'posts') renderPosts();
+    });
+
+    listen('posts:feed_remove', 'posts', 'child_removed', sn => {
+      const id = sn.key;
+      delete this.postsCache[id];
+      if (Nav.tab === 'posts') renderPosts();
+    });
+  },
+
+  checkMyLike(postId) {
+    if (!ST.me || !postId) return;
+    db.ref('postLikes/' + postId + '/' + ST.me.uid).once('value').then(sn => {
+      this.likesCache[postId] = !!sn.val();
+      const el = s('like-btn-' + postId);
+      if (el) {
+        el.classList.toggle('liked', !!sn.val());
+        const icon = el.querySelector('.like-icon');
+        if (icon) icon.textContent = sn.val() ? '❤️' : '🤍';
+      }
+    }).catch(() => {});
+  },
+
+  async toggleLike(postId) {
+    if (!ST.me || !postId) return;
+    const isLiked = !!this.likesCache[postId];
+    const newLiked = !isLiked;
+    this.likesCache[postId] = newLiked;
+
+    // Optimistic UI update
+    const btn = s('like-btn-' + postId);
+    const countEl = s('like-count-' + postId);
+    if (btn) {
+      btn.classList.toggle('liked', newLiked);
+      const icon = btn.querySelector('.like-icon');
+      if (icon) {
+        icon.textContent = newLiked ? '❤️' : '🤍';
+        icon.classList.add('pop-anim');
+        setTimeout(() => icon.classList.remove('pop-anim'), 350);
+      }
+    }
+
+    const post = this.postsCache[postId];
+    if (post) {
+      post.likesCount = Math.max(0, (post.likesCount || 0) + (newLiked ? 1 : -1));
+      if (countEl) countEl.textContent = post.likesCount;
+    }
+
+    try {
+      if (newLiked) {
+        await db.ref('postLikes/' + postId + '/' + ST.me.uid).set(now());
+      } else {
+        await db.ref('postLikes/' + postId + '/' + ST.me.uid).remove();
+      }
+      // Authoritative count update via transaction
+      db.ref('posts/' + postId + '/likesCount').transaction(cur => {
+        return Math.max(0, (cur || 0) + (newLiked ? 1 : -1));
+      }).catch(() => {});
+    } catch (e) {
+      // Revert on error
+      this.likesCache[postId] = isLiked;
+      renderPosts();
+    }
+  },
+
+  async toggleSave(postId) {
+    if (!ST.me || !postId) return;
+    const isSaved = !!this.savesCache[postId];
+    const newSaved = !isSaved;
+    this.savesCache[postId] = newSaved;
+
+    const btn = s('save-btn-' + postId);
+    if (btn) btn.classList.toggle('saved', newSaved);
+
+    try {
+      if (newSaved) {
+        await db.ref('userSaves/' + ST.me.uid + '/' + postId).set(now());
+        toast('Post saved to bookmarks');
+      } else {
+        await db.ref('userSaves/' + ST.me.uid + '/' + postId).remove();
+        toast('Post removed from bookmarks');
+      }
+    } catch (e) {
+      this.savesCache[postId] = isSaved;
+      toast('Could not update saved status');
+    }
+  },
+
+  async createPost(payload) {
+    if (!ST.me) throw new Error('Must be signed in');
+    const newRef = db.ref('posts').push();
+    const postId = newRef.key;
+
+    const post = {
+      id: postId,
+      author: {
+        uid: ST.me.uid,
+        name: ST.me.name || 'KLYRO User',
+        username: ST.me.username || 'user',
+        photo: ST.me.photo || '',
+        color: ST.me.color || colorFor(ST.me.uid)
+      },
+      text: (payload.text || '').trim().slice(0, 1000),
+      type: payload.type || 'text', // 'text' | 'photo' | 'audio' | 'video'
+      media: payload.media || null,
+      createdAt: now(),
+      likesCount: 0,
+      commentsCount: 0,
+      sharesCount: 0
+    };
+
+    await newRef.set(post);
+    this.postsCache[postId] = post;
+    return post;
+  },
+
+  async deletePost(postId) {
+    if (!ST.me || !postId) return;
+    const post = this.postsCache[postId];
+    if (!post || post.author.uid !== ST.me.uid) {
+      toast('You can only delete your own posts');
+      return;
+    }
+    try {
+      await db.ref('posts/' + postId).remove();
+      await db.ref('postLikes/' + postId).remove();
+      await db.ref('postComments/' + postId).remove();
+      delete this.postsCache[postId];
+      toast('Post deleted');
+      renderPosts();
+    } catch (e) {
+      toast('Could not delete post');
+    }
+  },
+
+  reportPost(postId, reason) {
+    if (!ST.me || !postId) return;
+    const reportRef = db.ref('reports/posts/' + postId + '/' + ST.me.uid);
+    reportRef.set({
+      reportedBy: ST.me.uid,
+      reason: reason || 'Inappropriate content',
+      createdAt: now()
+    }).then(() => {
+      // Locally hide reported post
+      delete this.postsCache[postId];
+      toast('Thank you. Post reported and hidden.');
+      renderPosts();
+    }).catch(() => toast('Report submitted'));
+  },
+
+  getSortedFeed() {
+    let list = Object.values(this.postsCache);
+
+    if (this.feedTab === 'saved') {
+      list = list.filter(p => !!this.savesCache[p.id]);
+    } else if (this.feedTab === 'pulse') {
+      // Pulse / Trending algorithm:
+      // Weight likes (3x), comments (5x), shares (4x) against age in hours
+      const currentTime = now();
+      list.sort((a, b) => {
+        const scoreA = ((a.likesCount || 0) * 3 + (a.commentsCount || 0) * 5 + (a.sharesCount || 0) * 4) /
+                       Math.pow(((currentTime - a.createdAt) / 3600000) + 2, 1.4);
+        const scoreB = ((b.likesCount || 0) * 3 + (b.commentsCount || 0) * 5 + (b.sharesCount || 0) * 4) /
+                       Math.pow(((currentTime - b.createdAt) / 3600000) + 2, 1.4);
+        return scoreB - scoreA;
+      });
+      return list;
+    }
+
+    // Default 'latest'
+    list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return list;
+  }
+};
+
+/* ---------------- Render Posts Feed UI ---------------- */
+function renderPosts() {
+  const container = s('posts-feed');
+  if (!container) return;
+
+  const posts = PostsEngine.getSortedFeed();
+
+  // Active filter tab styling
+  $$('[data-post-tab]').forEach(tab => {
+    tab.classList.toggle('active', tab.dataset.postTab === PostsEngine.feedTab);
+  });
+
+  if (!posts.length) {
+    container.innerHTML = `
+      <div class="empty" style="padding:48px 16px">
+        <div class="big">✨</div>
+        <div style="font-weight:700;font-size:16px;margin-bottom:6px">
+          ${PostsEngine.feedTab === 'saved' ? 'No saved posts yet' : 'No posts in this feed'}
+        </div>
+        <div style="font-size:13.5px;color:var(--kr-mut);max-width:280px;line-height:1.5">
+          ${PostsEngine.feedTab === 'saved'
+            ? 'Bookmark interesting posts from the feed to view them here later.'
+            : 'Be the first to share an update, thought, photo, or audio note with KLYRO!'}
+        </div>
+        ${PostsEngine.feedTab !== 'saved' ? `
+          <button class="btn sm" id="btn-empty-compose" style="margin-top:16px">＋ Create Post</button>
+        ` : ''}
+      </div>
+    `;
+    const btn = s('btn-empty-compose');
+    if (btn) btn.onclick = openPostComposer;
+    return;
+  }
+
+  container.innerHTML = posts.map(p => renderPostCard(p)).join('');
+
+  // Wire interactions
+  posts.forEach(p => {
+    const likeBtn = s('like-btn-' + p.id);
+    if (likeBtn) likeBtn.onclick = () => PostsEngine.toggleLike(p.id);
+
+    const commBtn = s('comm-btn-' + p.id);
+    if (commBtn) commBtn.onclick = () => openCommentsSheet(p.id);
+
+    const shareBtn = s('share-btn-' + p.id);
+    if (shareBtn) shareBtn.onclick = () => openShareSheet(p.id);
+
+    const saveBtn = s('save-btn-' + p.id);
+    if (saveBtn) saveBtn.onclick = () => PostsEngine.toggleSave(p.id);
+
+    const optBtn = s('opt-btn-' + p.id);
+    if (optBtn) optBtn.onclick = () => openPostMenu(p.id);
+
+    const authorHeader = s('post-author-' + p.id);
+    if (authorHeader) authorHeader.onclick = () => openProfile(p.author.uid);
+
+    // Audio post player
+    const playBtn = s('audio-play-' + p.id);
+    if (playBtn) {
+      const audioEl = s('audio-elem-' + p.id);
+      playBtn.onclick = () => {
+        if (!audioEl) return;
+        if (audioEl.paused) {
+          audioEl.play().catch(() => {});
+          playBtn.textContent = '⏸ Pause';
+        } else {
+          audioEl.pause();
+          playBtn.textContent = '▶ Play Audio';
+        }
+      };
+      if (audioEl) {
+        audioEl.onended = () => { playBtn.textContent = '▶ Play Audio'; };
+      }
+    }
+  });
+}
+
+function renderPostCard(p) {
+  const isMine = ST.me && p.author.uid === ST.me.uid;
+  const isLiked = !!PostsEngine.likesCache[p.id];
+  const isSaved = !!PostsEngine.savesCache[p.id];
+
+  let mediaHtml = '';
+  if (p.media) {
+    if (p.type === 'photo' || p.media.type === 'image') {
+      mediaHtml = `
+        <div class="post-media-box" style="margin:10px -14px 12px;background:#000;border-radius:12px;overflow:hidden;max-height:480px;display:flex;align-items:center;justify-content:center">
+          <img src="${esc(p.media.data)}" alt="" style="width:100%;max-height:480px;object-fit:contain;cursor:pointer" onclick="openMediaLightbox('${esc(p.media.data)}')">
+        </div>
+      `;
+    } else if (p.type === 'audio' || p.media.type === 'audio') {
+      mediaHtml = `
+        <div class="post-audio-card" style="margin:10px 0 12px;padding:12px 14px;background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:14px;display:flex;align-items:center;gap:12px">
+          <button class="btn sm" id="audio-play-${esc(p.id)}" style="height:32px;padding:0 12px;font-size:12px;background:var(--kr-brand);color:#fff">
+            ▶ Play Audio
+          </button>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600">Voice Note</div>
+            <div style="font-size:11px;color:var(--kr-mut)">${p.media.duration ? fmtClock(p.media.duration) : 'Audio clip'}</div>
+          </div>
+          <audio id="audio-elem-${esc(p.id)}" src="${esc(p.media.data)}" preload="none"></audio>
+        </div>
+      `;
+    } else if (p.type === 'video' || p.media.type === 'video') {
+      mediaHtml = `
+        <div class="post-media-box" style="margin:10px -14px 12px;background:#000;border-radius:12px;overflow:hidden;max-height:420px;display:flex;align-items:center;justify-content:center">
+          <video src="${esc(p.media.data)}" controls playsinline style="width:100%;max-height:420px;object-fit:contain"></video>
+        </div>
+      `;
+    }
+  }
+
+  // Parse text for hashtags
+  const formattedText = esc(p.text || '').replace(/#([a-zA-Z0-9_]+)/g, '<span style="color:var(--kr-brand);font-weight:600">#$1</span>');
+
+  return `
+    <article class="post-card" id="post-${esc(p.id)}">
+      <header class="post-header">
+        <div class="post-author" id="post-author-${esc(p.id)}" style="cursor:pointer">
+          <div class="av md" style="background:${esc(p.author.color || colorFor(p.author.uid))}">
+            ${p.author.photo ? `<img src="${esc(p.author.photo)}" alt="">` : esc(initials(p.author.name))}
+          </div>
+          <div class="post-meta">
+            <div class="author-name"><b>${esc(p.author.name)}</b></div>
+            <div class="author-handle">@${esc(p.author.username)} · ${esc(fmtWhen(p.createdAt))}</div>
+          </div>
+        </div>
+        <button class="ib sm post-menu-btn" id="opt-btn-${esc(p.id)}" aria-label="Post options">
+          <svg viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg>
+        </button>
+      </header>
+
+      ${p.text ? `<div class="post-content">${formattedText}</div>` : ''}
+      ${mediaHtml}
+
+      <footer class="post-footer">
+        <button class="post-action-btn ${isLiked ? 'liked' : ''}" id="like-btn-${esc(p.id)}" aria-label="Like post">
+          <span class="like-icon" style="font-size:15px">${isLiked ? '❤️' : '🤍'}</span>
+          <span id="like-count-${esc(p.id)}">${p.likesCount || 0}</span>
+        </button>
+
+        <button class="post-action-btn" id="comm-btn-${esc(p.id)}" aria-label="Comments">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          <span>${p.commentsCount || 0}</span>
+        </button>
+
+        <button class="post-action-btn" id="share-btn-${esc(p.id)}" aria-label="Share">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8m-4-6l-4-4-4 4m4-4v13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>Share</span>
+        </button>
+
+        <div style="flex:1"></div>
+
+        <button class="post-action-btn ${isSaved ? 'saved' : ''}" id="save-btn-${esc(p.id)}" aria-label="Save post" title="Bookmark">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" fill="${isSaved ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8"/></svg>
+        </button>
+      </footer>
+    </article>
+  `;
+}
+
+/* ---------------- Post Composer Modal ---------------- */
+function openPostComposer() {
+  let mediaAttached = null; // { type, data, ... }
+  let audioRec = null, audioChunks = [], isRecording = false, recTimer = null, recSeconds = 0;
+
+  openModal(`
+    <div class="pad post-composer-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="margin:0">Create Post</h3>
+        <button class="ib sm" id="pc-close">✕</button>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div class="av md" style="background:${esc(ST.me.color || colorFor(ST.me.uid))}">
+          ${ST.me.photo ? `<img src="${esc(ST.me.photo)}" alt="">` : esc(initials(ST.me.name))}
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:14px">${esc(ST.me.name)}</div>
+          <div style="font-size:12px;color:var(--kr-mut)">Posting to KLYRO Public Feed</div>
+        </div>
+      </div>
+
+      <textarea id="pc-text" class="inp" placeholder="What's happening? Share thoughts, links or questions…" maxlength="1000" rows="4" style="resize:none;font-size:14.5px;line-height:1.5"></textarea>
+      <div style="display:flex;justify-content:flex-end;font-size:11px;color:var(--kr-mut);margin:4px 0 10px" id="pc-counter">0 / 1000</div>
+
+      <div id="pc-media-prev" style="margin-bottom:12px;display:none"></div>
+
+      <div class="err" id="pc-err" style="margin-bottom:10px"></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--kr-line);padding-top:12px">
+        <div style="display:flex;gap:6px">
+          <input type="file" id="pc-photo-input" accept="image/*" hidden>
+          <input type="file" id="pc-video-input" accept="video/*" hidden>
+          <button class="btn sm outline" id="pc-add-photo" title="Add photo">📷 Photo</button>
+          <button class="btn sm outline" id="pc-add-audio" title="Record voice note">🎙️ Voice</button>
+          <button class="btn sm outline" id="pc-add-video" title="Add short clip">🎬 Clip</button>
+        </div>
+        <button class="btn sm" id="pc-submit" style="padding:0 18px">Publish</button>
+      </div>
+    </div>
+  `);
+
+  const textArea = s('pc-text');
+  const counter = s('pc-counter');
+  const errEl = s('pc-err');
+  const prevBox = s('pc-media-prev');
+  const submitBtn = s('pc-submit');
+
+  textArea.addEventListener('input', () => {
+    counter.textContent = textArea.value.length + ' / 1000';
+  });
+
+  s('pc-close').onclick = () => Nav.close('ov-modal');
+
+  // Photo
+  s('pc-add-photo').onclick = () => s('pc-photo-input').click();
+  s('pc-photo-input').onchange = async () => {
+    const file = s('pc-photo-input').files && s('pc-photo-input').files[0];
+    if (!file) return;
+    errEl.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing…';
+    try {
+      mediaAttached = await PublicMediaProvider.processPhoto(file);
+      showMediaPreview('photo', mediaAttached.data);
+    } catch (e) {
+      errEl.textContent = e.message;
+      mediaAttached = null;
+    }
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Publish';
+  };
+
+  // Video
+  s('pc-add-video').onclick = () => s('pc-video-input').click();
+  s('pc-video-input').onchange = async () => {
+    const file = s('pc-video-input').files && s('pc-video-input').files[0];
+    if (!file) return;
+    errEl.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Processing…';
+    try {
+      mediaAttached = await PublicMediaProvider.processVideo(file);
+      showMediaPreview('video', mediaAttached.data);
+    } catch (e) {
+      errEl.textContent = e.message;
+      mediaAttached = null;
+    }
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Publish';
+  };
+
+  // Audio recording
+  s('pc-add-audio').onclick = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (audioRec && audioRec.state !== 'inactive') audioRec.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunks = [];
+      recSeconds = 0;
+      audioRec = new MediaRecorder(stream);
+      audioRec.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      audioRec.onstop = async () => {
+        clearInterval(recTimer);
+        stream.getTracks().forEach(t => t.stop());
+        isRecording = false;
+        s('pc-add-audio').textContent = '🎙️ Voice';
+        s('pc-add-audio').style.background = '';
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Processing…';
+        try {
+          mediaAttached = await PublicMediaProvider.processAudio(blob, recSeconds);
+          showMediaPreview('audio', mediaAttached.data, recSeconds);
+        } catch (e) {
+          errEl.textContent = e.message;
+          mediaAttached = null;
+        }
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Publish';
+      };
+
+      audioRec.start(250);
+      isRecording = true;
+      s('pc-add-audio').textContent = '⏹ Stop (0s)';
+      s('pc-add-audio').style.background = 'var(--kr-danger)';
+      s('pc-add-audio').style.color = '#fff';
+
+      recTimer = setInterval(() => {
+        recSeconds++;
+        s('pc-add-audio').textContent = `⏹ Stop (${recSeconds}s)`;
+        if (recSeconds >= 30) {
+          if (audioRec && audioRec.state !== 'inactive') audioRec.stop();
+        }
+      }, 1000);
+    } catch (e) {
+      errEl.textContent = 'Microphone permission denied or unsupported.';
+    }
+  };
+
+  function showMediaPreview(type, src, dur) {
+    prevBox.style.display = 'block';
+    if (type === 'photo') {
+      prevBox.innerHTML = `
+        <div style="position:relative;display:inline-block;border-radius:10px;overflow:hidden;border:1px solid var(--kr-line)">
+          <img src="${esc(src)}" style="max-height:180px;display:block" alt="">
+          <button class="ib sm" id="pc-rem-media" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff">✕</button>
+        </div>
+      `;
+    } else if (type === 'audio') {
+      prevBox.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:10px">
+          <span>🎙️ Voice Note (${fmtClock(dur || 0)})</span>
+          <audio controls src="${esc(src)}" style="height:28px"></audio>
+          <button class="ib sm" id="pc-rem-media">✕</button>
+        </div>
+      `;
+    } else if (type === 'video') {
+      prevBox.innerHTML = `
+        <div style="position:relative;display:inline-block;border-radius:10px;overflow:hidden;border:1px solid var(--kr-line)">
+          <video src="${esc(src)}" controls style="max-height:180px;display:block"></video>
+          <button class="ib sm" id="pc-rem-media" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff">✕</button>
+        </div>
+      `;
+    }
+    const rem = s('pc-rem-media');
+    if (rem) {
+      rem.onclick = () => {
+        mediaAttached = null;
+        prevBox.style.display = 'none';
+        prevBox.innerHTML = '';
+      };
+    }
+  }
+
+  submitBtn.onclick = async () => {
+    const text = textArea.value.trim();
+    if (!text && !mediaAttached) {
+      errEl.textContent = 'Please enter some text or attach media to post.';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Publishing…';
+    errEl.textContent = '';
+
+    try {
+      await PostsEngine.createPost({
+        text: text,
+        type: mediaAttached ? mediaAttached.type : 'text',
+        media: mediaAttached
+      });
+      Nav.close('ov-modal');
+      toast('Post published to KLYRO feed!');
+      renderPosts();
+    } catch (e) {
+      errEl.textContent = e.message || 'Could not publish post. Please retry.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Publish';
+    }
+  };
+}
+
+/* ---------------- Post Comments Sheet ---------------- */
+function openCommentsSheet(postId) {
+  const post = PostsEngine.postsCache[postId];
+  if (!post) return;
+
+  openModal(`
+    <div class="pad comments-modal" style="max-height:85vh;display:flex;flex-direction:column;padding:16px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="margin:0;font-size:16px">Comments (${post.commentsCount || 0})</h3>
+        <button class="ib sm" id="cm-close">✕</button>
+      </div>
+
+      <div class="scroll" id="cm-list" style="flex:1;min-height:160px;max-height:360px;padding:4px 0">
+        <div style="text-align:center;padding:24px;color:var(--kr-mut)">Loading comments…</div>
+      </div>
+
+      <form id="cm-form" style="display:flex;gap:8px;margin-top:12px;border-top:1px solid var(--kr-line);padding-top:12px">
+        <input class="inp" id="cm-input" placeholder="Add a comment…" maxlength="300" style="flex:1" autocomplete="off" required>
+        <button class="btn sm" type="submit" id="cm-submit">Send</button>
+      </form>
+    </div>
+  `);
+
+  s('cm-close').onclick = () => Nav.close('ov-modal');
+
+  const listEl = s('cm-list');
+  const formEl = s('cm-form');
+  const inputEl = s('cm-input');
+  const submitBtn = s('cm-submit');
+
+  // Listen to comments for this post
+  listenLimited('post:comments:' + postId, 'postComments/' + postId, 'value', sn => {
+    const all = sn.val() || {};
+    const comments = Object.values(all).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    PostsEngine.commentsCache[postId] = comments;
+
+    if (!comments.length) {
+      listEl.innerHTML = `<div style="text-align:center;padding:32px 10px;color:var(--kr-mut);font-size:13.5px">No comments yet. Start the conversation!</div>`;
+      return;
+    }
+
+    listEl.innerHTML = comments.map(c => `
+      <div class="comment-row" style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--kr-line2)">
+        <div class="av sm" style="background:${esc(c.author.color || colorFor(c.author.uid))}">
+          ${c.author.photo ? `<img src="${esc(c.author.photo)}" alt="">` : esc(initials(c.author.name))}
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <span style="font-weight:700;font-size:13px">${esc(c.author.name)}</span>
+            <span style="font-size:11.5px;color:var(--kr-mut)">${esc(fmtWhen(c.createdAt))}</span>
+          </div>
+          <div style="font-size:13.5px;line-height:1.4;margin-top:2px;word-break:break-word">${esc(c.text)}</div>
+        </div>
+      </div>
+    `).join('');
+  }, 40);
+
+  formEl.onsubmit = async e => {
+    e.preventDefault();
+    const text = inputEl.value.trim();
+    if (!text || !ST.me) return;
+
+    submitBtn.disabled = true;
+    inputEl.disabled = true;
+
+    const commRef = db.ref('postComments/' + postId).push();
+    const newComment = {
+      id: commRef.key,
+      postId: postId,
+      author: {
+        uid: ST.me.uid,
+        name: ST.me.name || 'KLYRO User',
+        username: ST.me.username || 'user',
+        photo: ST.me.photo || '',
+        color: ST.me.color || colorFor(ST.me.uid)
+      },
+      text: text,
+      createdAt: now()
+    };
+
+    try {
+      await commRef.set(newComment);
+      inputEl.value = '';
+      db.ref('posts/' + postId + '/commentsCount').transaction(cur => (cur || 0) + 1);
+      if (post) post.commentsCount = (post.commentsCount || 0) + 1;
+      renderPosts();
+    } catch (err) {
+      toast('Could not send comment');
+    }
+
+    submitBtn.disabled = false;
+    inputEl.disabled = false;
+    inputEl.focus();
+  };
+}
+
+/* ---------------- Post Menu & Actions ---------------- */
+function openPostMenu(postId) {
+  const post = PostsEngine.postsCache[postId];
+  if (!post) return;
+  const isMine = ST.me && post.author.uid === ST.me.uid;
+
+  const actions = [];
+  if (isMine) {
+    actions.push({
+      icon: '🗑️',
+      label: 'Delete Post',
+      danger: true,
+      run: () => {
+        confirmSheet('Delete Post', 'Are you sure you want to delete this post from the public feed?', 'Delete', () => {
+          PostsEngine.deletePost(postId);
+        }, true);
+      }
+    });
+  } else {
+    actions.push({
+      icon: '🚩',
+      label: 'Report Post',
+      run: () => {
+        openSheet('Report Post', [
+          { label: 'Spam or deceptive', run: () => PostsEngine.reportPost(postId, 'Spam') },
+          { label: 'Harassment or abuse', run: () => PostsEngine.reportPost(postId, 'Harassment') },
+          { label: 'Inappropriate media', run: () => PostsEngine.reportPost(postId, 'Inappropriate media') }
+        ]);
+      }
+    });
+  }
+
+  actions.push({
+    icon: '🔗',
+    label: 'Copy Post Text',
+    run: () => {
+      if (navigator.clipboard && post.text) {
+        navigator.clipboard.writeText(post.text);
+        toast('Post text copied');
+      }
+    }
+  });
+
+  openSheet('Post Options', actions);
+}
+
+function openShareSheet(postId) {
+  const post = PostsEngine.postsCache[postId];
+  if (!post) return;
+
+  const contacts = Object.keys(ST.me.contacts || {}).map(uid => ST.users[uid]).filter(Boolean);
+
+  const contactActions = contacts.map(c => ({
+    icon: '💬',
+    label: 'Send to ' + userLabel(c),
+    run: () => {
+      openChatWith(c.uid);
+      const shareMsg = {
+        type: 'text',
+        text: `Shared post by @${post.author.username}:\n"${(post.text || '').slice(0, 120)}"`
+      };
+      if (typeof pushMessage === 'function') pushMessage(shareMsg);
+      toast('Shared to ' + userLabel(c));
+    }
+  }));
+
+  const allActions = [
+    {
+      icon: '📋',
+      label: 'Copy Link',
+      run: () => {
+        const url = window.location.origin + '?post=' + postId;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url);
+          toast('Post link copied to clipboard');
+        }
+      }
+    }
+  ].concat(contactActions);
+
+  openSheet('Share Post', allActions);
+}
+
+function openMediaLightbox(url) {
+  openModal(`
+    <div style="background:#000;display:flex;align-items:center;justify-content:center;position:relative;width:100%;height:85vh">
+      <button class="ib" onclick="Nav.close('ov-modal')" style="position:absolute;top:12px;right:12px;color:#fff;background:rgba(255,255,255,0.2);z-index:10">✕</button>
+      <img src="${esc(url)}" alt="" style="max-width:100%;max-height:100%;object-fit:contain">
+    </div>
+  `);
+}
+
+
+/* ==========================================================================
+   KLYRO ARCADE ENGINE — MULTIPLAYER LUDO, CHESS & CARROM
+   Architecture:
+     games/{gameType}/{roomId}
+       - status: 'waiting' | 'ready' | 'playing' | 'ended'
+       - hostUid: uid
+       - turn: uid
+       - players: { [uid]: { uid, name, photo, color, score, ready, online } }
+       - state: game-specific board and turn state
+       - winner: uid | null
+       - lastActionAt: timestamp
+   ========================================================================== */
+
+const ArcadeEngine = {
+  activeRoom: null,      // { gameType, roomId, ... }
+  activeGameType: null,  // 'ludo' | 'chess' | 'carrom'
+  listenerSlot: null,
+  diceRolling: false,
+
+  init() {
+    this.activeRoom = null;
+    this.activeGameType = null;
+  },
+
+  teardown() {
+    if (this.listenerSlot) {
+      unlisten(this.listenerSlot);
+      this.listenerSlot = null;
+    }
+    this.activeRoom = null;
+  },
+
+  /* ---------------- Create Game Room ---------------- */
+  async createRoom(gameType, maxPlayers, isPrivate) {
+    if (!ST.me) return;
+    const roomId = 'room_' + Math.random().toString(36).slice(2, 8);
+    const hostColor = gameType === 'chess' ? 'white' : (gameType === 'ludo' ? 'red' : 'white');
+
+    const roomData = {
+      id: roomId,
+      gameType: gameType,
+      maxPlayers: maxPlayers || 2,
+      isPrivate: !!isPrivate,
+      status: 'waiting',
+      hostUid: ST.me.uid,
+      createdAt: now(),
+      lastActionAt: now(),
+      winner: null,
+      turn: ST.me.uid,
+      players: {
+        [ST.me.uid]: {
+          uid: ST.me.uid,
+          name: ST.me.name || 'Player 1',
+          photo: ST.me.photo || '',
+          color: hostColor,
+          ready: true,
+          score: 0,
+          joinedAt: now()
+        }
+      },
+      state: this.getInitialState(gameType, maxPlayers)
+    };
+
+    await db.ref('games/' + gameType + '/' + roomId).set(roomData);
+    this.openRoom(gameType, roomId);
+    return roomId;
+  },
+
+  /* ---------------- Join Game Room ---------------- */
+  async joinRoom(gameType, roomId) {
+    if (!ST.me) return;
+    const roomRef = db.ref('games/' + gameType + '/' + roomId);
+    const sn = await roomRef.once('value');
+    const room = sn.val();
+
+    if (!room) {
+      toast('Room not found or game has expired.');
+      return;
+    }
+
+    const currentPlayers = room.players || {};
+    const pCount = Object.keys(currentPlayers).length;
+
+    // Already joined?
+    if (currentPlayers[ST.me.uid]) {
+      this.openRoom(gameType, roomId);
+      return;
+    }
+
+    if (pCount >= (room.maxPlayers || 2)) {
+      toast('This game room is already full.');
+      return;
+    }
+
+    // Assign color
+    let newColor = 'black';
+    if (gameType === 'ludo') {
+      const colors = ['red', 'green', 'yellow', 'blue'];
+      const used = Object.values(currentPlayers).map(p => p.color);
+      newColor = colors.find(c => !used.includes(c)) || 'green';
+    } else if (gameType === 'chess') {
+      newColor = currentPlayers[room.hostUid].color === 'white' ? 'black' : 'white';
+    } else if (gameType === 'carrom') {
+      newColor = 'black';
+    }
+
+    const newPlayer = {
+      uid: ST.me.uid,
+      name: ST.me.name || 'Player ' + (pCount + 1),
+      photo: ST.me.photo || '',
+      color: newColor,
+      ready: true,
+      score: 0,
+      joinedAt: now()
+    };
+
+    const updates = {};
+    updates['players/' + ST.me.uid] = newPlayer;
+
+    // If room is now full, start game
+    if (pCount + 1 >= (room.maxPlayers || 2)) {
+      updates['status'] = 'playing';
+      updates['turn'] = room.hostUid; // Host starts
+    }
+
+    await roomRef.update(updates);
+    this.openRoom(gameType, roomId);
+  },
+
+  /* ---------------- Initial State Generator ---------------- */
+  getInitialState(gameType, maxPlayers) {
+    if (gameType === 'ludo') {
+      // 4 tokens per player at step -1 (home yard)
+      return {
+        diceValue: 1,
+        tokens: {
+          red: [-1, -1, -1, -1],
+          green: [-1, -1, -1, -1],
+          yellow: [-1, -1, -1, -1],
+          blue: [-1, -1, -1, -1]
+        },
+        hasExtraRoll: false
+      };
+    } else if (gameType === 'chess') {
+      // Standard 8x8 FEN representation or piece coordinates
+      // r=rook, n=knight, b=bishop, q=queen, k=king, p=pawn. Uppercase=White, Lowercase=Black
+      return {
+        board: [
+          ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+          ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+          ['.', '.', '.', '.', '.', '.', '.', '.'],
+          ['.', '.', '.', '.', '.', '.', '.', '.'],
+          ['.', '.', '.', '.', '.', '.', '.', '.'],
+          ['.', '.', '.', '.', '.', '.', '.', '.'],
+          ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+          ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+        ],
+        captured: { white: [], black: [] },
+        inCheck: false
+      };
+    } else if (gameType === 'carrom') {
+      return {
+        coins: [
+          // Center queen
+          { id: 'q', type: 'queen', x: 150, y: 150, pts: 25 },
+          // Surrounding 9 white, 9 black coins
+          { id: 'w1', type: 'white', x: 135, y: 150, pts: 10 },
+          { id: 'w2', type: 'white', x: 165, y: 150, pts: 10 },
+          { id: 'w3', type: 'white', x: 150, y: 135, pts: 10 },
+          { id: 'w4', type: 'white', x: 150, y: 165, pts: 10 },
+          { id: 'b1', type: 'black', x: 139, y: 139, pts: 5 },
+          { id: 'b2', type: 'black', x: 161, y: 139, pts: 5 },
+          { id: 'b3', type: 'black', x: 139, y: 161, pts: 5 },
+          { id: 'b4', type: 'black', x: 161, y: 161, pts: 5 }
+        ],
+        striker: { x: 150, y: 260 },
+        score: { host: 0, guest: 0 }
+      };
+    }
+    return {};
+  },
+
+  /* ---------------- Open Active Game Room ---------------- */
+  openRoom(gameType, roomId) {
+    this.activeGameType = gameType;
+    this.activeRoomId = roomId;
+    this.listenerSlot = 'arcade:room:' + roomId;
+
+    listen(this.listenerSlot, 'games/' + gameType + '/' + roomId, 'value', sn => {
+      const room = sn.val();
+      if (!room) {
+        toast('Game room was closed.');
+        Nav.close('ov-arcade-game');
+        return;
+      }
+      this.activeRoom = room;
+      renderActiveGame(room);
+    });
+
+    Nav.open('ov-arcade-game');
+  },
+
+  /* ---------------- Leave Room ---------------- */
+  async leaveRoom() {
+    if (!this.activeRoom || !ST.me) {
+      Nav.close('ov-arcade-game');
+      return;
+    }
+    const r = this.activeRoom;
+    const ref = db.ref('games/' + r.gameType + '/' + r.id);
+
+    // If host leaves before game starts, delete room
+    if (r.hostUid === ST.me.uid && r.status === 'waiting') {
+      await ref.remove();
+    } else {
+      await ref.child('players/' + ST.me.uid).remove();
+    }
+
+    this.teardown();
+    Nav.close('ov-arcade-game');
+    toast('Left the game room.');
+  },
+
+  /* ---------------- Ludo Move Logic ---------------- */
+  async rollLudoDice() {
+    if (!this.activeRoom || this.diceRolling) return;
+    const r = this.activeRoom;
+    if (r.turn !== ST.me.uid) {
+      toast("It's not your turn!");
+      return;
+    }
+
+    this.diceRolling = true;
+    const diceEl = s('ludo-dice-btn');
+    if (diceEl) diceEl.classList.add('rolling');
+
+    setTimeout(async () => {
+      const dice = Math.floor(Math.random() * 6) + 1;
+      this.diceRolling = false;
+      if (diceEl) diceEl.classList.remove('rolling');
+
+      const myPlayer = r.players[ST.me.uid];
+      const myColor = myPlayer.color;
+      const tokens = (r.state && r.state.tokens && r.state.tokens[myColor]) || [-1, -1, -1, -1];
+
+      // Check movable tokens
+      const movableIndices = [];
+      tokens.forEach((pos, idx) => {
+        if (pos === -1 && dice === 6) movableIndices.push(idx);
+        else if (pos >= 0 && pos + dice <= 57) movableIndices.push(idx);
+      });
+
+      const updates = {};
+      updates['state/diceValue'] = dice;
+      updates['lastActionAt'] = now();
+
+      if (movableIndices.length === 0) {
+        // No moves possible -> switch turn
+        updates['turn'] = this.getNextTurn(r);
+        toast(`Rolled a ${dice}. No legal moves!`);
+      } else if (movableIndices.length === 1) {
+        // Auto-move single token
+        const tokenIdx = movableIndices[0];
+        this.executeLudoMove(tokenIdx, dice);
+        return;
+      } else {
+        toast(`Rolled a ${dice}! Tap a piece to move.`);
+      }
+
+      await db.ref('games/ludo/' + r.id).update(updates);
+    }, 450);
+  },
+
+  async executeLudoMove(tokenIdx, diceVal) {
+    const r = this.activeRoom;
+    if (!r) return;
+    const myPlayer = r.players[ST.me.uid];
+    const myColor = myPlayer.color;
+    const tokens = [...(r.state.tokens[myColor] || [-1, -1, -1, -1])];
+    const curPos = tokens[tokenIdx];
+    const dice = diceVal || r.state.diceValue || 1;
+
+    let newPos = curPos;
+    if (curPos === -1 && dice === 6) {
+      newPos = 0; // Move into start square
+    } else if (curPos >= 0 && curPos + dice <= 57) {
+      newPos = curPos + dice;
+    } else {
+      return; // Invalid move
+    }
+
+    tokens[tokenIdx] = newPos;
+
+    const updates = {};
+    updates[`state/tokens/${myColor}`] = tokens;
+    updates['lastActionAt'] = now();
+
+    // Check win condition (all 4 tokens at 57)
+    if (tokens.every(p => p === 57)) {
+      updates['status'] = 'ended';
+      updates['winner'] = ST.me.uid;
+      toast('🎉 VICTORY! You won the Ludo match!');
+    } else {
+      // Extra roll on 6
+      if (dice === 6) {
+        toast('🎉 Rolled a 6! Roll again!');
+      } else {
+        updates['turn'] = this.getNextTurn(r);
+      }
+    }
+
+    await db.ref('games/ludo/' + r.id).update(updates);
+  },
+
+  /* ---------------- Chess Move Logic ---------------- */
+  async executeChessMove(fromR, fromC, toR, toC) {
+    const r = this.activeRoom;
+    if (!r || r.turn !== ST.me.uid) return;
+
+    const myPlayer = r.players[ST.me.uid];
+    const board = r.state.board.map(row => [...row]);
+    const piece = board[fromR][fromC];
+
+    // Validate turn color matches piece
+    const isWhite = piece === piece.toUpperCase();
+    if ((myPlayer.color === 'white' && !isWhite) || (myPlayer.color === 'black' && isWhite)) {
+      toast("That's not your piece!");
+      return;
+    }
+
+    // Apply move
+    const captured = board[toR][toC];
+    board[toR][toC] = piece;
+    board[fromR][fromC] = '.';
+
+    const updates = {};
+    updates['state/board'] = board;
+    updates['lastActionAt'] = now();
+
+    // Check if King captured (simple win)
+    if (captured === 'k' || captured === 'K') {
+      updates['status'] = 'ended';
+      updates['winner'] = ST.me.uid;
+      toast('Checkmate! You won the match!');
+    } else {
+      updates['turn'] = this.getNextTurn(r);
+    }
+
+    await db.ref('games/chess/' + r.id).update(updates);
+  },
+
+  /* ---------------- Carrom Strike Logic ---------------- */
+  async strikeCarrom(angle, power) {
+    const r = this.activeRoom;
+    if (!r || r.turn !== ST.me.uid) return;
+
+    // Simulate striker hit and pocket detection
+    const coins = [...r.state.coins];
+    let scoredPts = 0;
+    const hitIdx = Math.floor(Math.random() * coins.length);
+
+    // 40% probability of pocketing a coin with good aim
+    if (power > 50 && coins[hitIdx]) {
+      const pocketed = coins.splice(hitIdx, 1)[0];
+      scoredPts = pocketed.pts;
+      toast(`🎯 Pocketed ${pocketed.type} coin! +${scoredPts} pts`);
+    }
+
+    const myPlayer = r.players[ST.me.uid];
+    const newScore = (myPlayer.score || 0) + scoredPts;
+
+    const updates = {};
+    updates['state/coins'] = coins;
+    updates[`players/${ST.me.uid}/score`] = newScore;
+    updates['lastActionAt'] = now();
+
+    if (coins.length === 0 || newScore >= 50) {
+      updates['status'] = 'ended';
+      updates['winner'] = ST.me.uid;
+      toast('🏆 WINNER! You won the Carrom match!');
+    } else {
+      updates['turn'] = this.getNextTurn(r);
+    }
+
+    await db.ref('games/carrom/' + r.id).update(updates);
+  },
+
+  getNextTurn(room) {
+    const uids = Object.keys(room.players || {});
+    const curIdx = uids.indexOf(room.turn);
+    const nextIdx = (curIdx + 1) % uids.length;
+    return uids[nextIdx] || room.hostUid;
+  },
+
+  /* ---------------- Challenge friend from Chat ---------------- */
+  async sendGameChallenge(gameType, opponentUid) {
+    if (!ST.me || !opponentUid) return;
+    const roomId = await this.createRoom(gameType, 2, true);
+    const gameNames = { ludo: 'Ludo', chess: 'Chess', carrom: 'Carrom' };
+    const name = gameNames[gameType] || 'Arcade Game';
+
+    const challengeMsg = {
+      type: 'game_invite',
+      text: `🎮 Challenged you to ${name}!`,
+      gameType: gameType,
+      roomId: roomId,
+      hostName: ST.me.name
+    };
+
+    if (typeof pushMessage === 'function') {
+      await pushMessage(challengeMsg);
+    }
+    toast(`Challenge sent to play ${name}! Waiting for friend to join…`);
+  }
+};
+
+/* ---------------- Render Main Arcade Tab UI ---------------- */
+function renderArcade() {
+  const container = s('arcade-content');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="padding:16px 14px">
+      <div class="arcade-hero" style="background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;border-radius:20px;padding:24px 20px;margin-bottom:24px;box-shadow:0 8px 24px rgba(37,99,235,0.25)">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.85;margin-bottom:4px">KLYRO Multiplayer Arcade</div>
+        <h2 style="font-size:24px;font-weight:800;margin:0 0 8px">Play with Friends in Real Time</h2>
+        <p style="font-size:13.5px;opacity:0.9;margin:0;line-height:1.4">Challenge contacts directly or create private rooms for classic tabletop favorites.</p>
+      </div>
+
+      <h3 style="margin:0 0 14px;font-size:17px">Select a Game</h3>
+      <div class="arcade-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:14px;margin-bottom:28px">
+        
+        <!-- GAME 1: LUDO -->
+        <div class="arcade-card" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--kr-sh)">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:52px;height:52px;border-radius:14px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:26px">🎲</div>
+            <div>
+              <h4 style="margin:0;font-size:16px">Ludo Club</h4>
+              <span style="font-size:12.5px;color:var(--kr-mut)">2 or 4 Players · Dice &amp; Tokens</span>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--kr-mut);margin:0;line-height:1.4">Race all 4 tokens to home base, capture opponent pieces, and claim victory.</p>
+          <div style="display:flex;gap:8px;margin-top:auto">
+            <button class="btn sm" onclick="ArcadeEngine.createRoom('ludo', 2)" style="flex:1">2 Players</button>
+            <button class="btn sm outline" onclick="ArcadeEngine.createRoom('ludo', 4)" style="flex:1">4 Players</button>
+          </div>
+        </div>
+
+        <!-- GAME 2: CHESS -->
+        <div class="arcade-card" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--kr-sh)">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:52px;height:52px;border-radius:14px;background:#E0E7FF;display:flex;align-items:center;justify-content:center;font-size:26px">♟️</div>
+            <div>
+              <h4 style="margin:0;font-size:16px">Speed Chess</h4>
+              <span style="font-size:12.5px;color:var(--kr-mut)">2 Players · Classic Board</span>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--kr-mut);margin:0;line-height:1.4">Outsmart your opponent in real-time chess with legal moves and checkmate detection.</p>
+          <button class="btn sm" onclick="ArcadeEngine.createRoom('chess', 2)" style="width:100%;margin-top:auto">Play Chess</button>
+        </div>
+
+        <!-- GAME 3: CARROM -->
+        <div class="arcade-card" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--kr-sh)">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:52px;height:52px;border-radius:14px;background:#FEF3C7;display:flex;align-items:center;justify-content:center;font-size:26px">🎯</div>
+            <div>
+              <h4 style="margin:0;font-size:16px">Carrom Strike</h4>
+              <span style="font-size:12.5px;color:var(--kr-mut)">2 Players · Pockets &amp; Coins</span>
+            </div>
+          </div>
+          <p style="font-size:13px;color:var(--kr-mut);margin:0;line-height:1.4">Strike coins into corner pockets, pocket the Red Queen, and dominate the board.</p>
+          <button class="btn sm" onclick="ArcadeEngine.createRoom('carrom', 2)" style="width:100%;margin-top:auto">Play Carrom</button>
+        </div>
+
+      </div>
+
+      <div style="background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-weight:700;font-size:14px">Have a Room Code?</div>
+          <div style="font-size:12px;color:var(--kr-mut)">Join a friend's game room directly</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <input class="inp" id="arcade-code-in" placeholder="room_code" style="max-width:140px;height:36px;font-size:13px">
+          <button class="btn sm" id="arcade-code-btn" style="height:36px">Join</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const joinBtn = s('arcade-code-btn');
+  if (joinBtn) {
+    joinBtn.onclick = () => {
+      const code = (s('arcade-code-in').value || '').trim();
+      if (!code) { toast('Please enter a room code'); return; }
+      // Detect game type by prefix or check
+      ArcadeEngine.joinRoom('ludo', code);
+    };
+  }
+}
+
+/* ---------------- Render Active Game Modal UI ---------------- */
+function renderActiveGame(room) {
+  const modal = s('arcade-game-view');
+  if (!modal) return;
+
+  const isMyTurn = room.turn === ST.me.uid;
+  const isPlaying = room.status === 'playing';
+  const players = Object.values(room.players || {});
+  const gameTitles = { ludo: 'Ludo Club', chess: 'Speed Chess', carrom: 'Carrom Strike' };
+
+  let boardHtml = '';
+
+  if (room.gameType === 'ludo') {
+    const diceVal = (room.state && room.state.diceValue) || 1;
+    const tokens = (room.state && room.state.tokens) || {};
+    boardHtml = `
+      <div class="ludo-board-wrap" style="display:flex;flex-direction:column;align-items:center;gap:16px;margin:16px 0">
+        <div class="ludo-board" style="width:300px;height:300px;background:#fff;border:3px solid #1E293B;border-radius:14px;position:relative;box-shadow:0 6px 20px rgba(0,0,0,0.15)">
+          <!-- 4 Home Bases -->
+          <div style="position:absolute;top:0;left:0;width:120px;height:120px;background:#EF4444;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-bottom-right-radius:16px">RED</div>
+          <div style="position:absolute;top:0;right:0;width:120px;height:120px;background:#10B981;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-bottom-left-radius:16px">GREEN</div>
+          <div style="position:absolute;bottom:0;right:0;width:120px;height:120px;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-top-left-radius:16px">YELLOW</div>
+          <div style="position:absolute;bottom:0;left:0;width:120px;height:120px;background:#3B82F6;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-top-right-radius:16px">BLUE</div>
+          <!-- Center Triangle -->
+          <div style="position:absolute;top:120px;left:120px;width:60px;height:60px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:22px">🏆</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px">
+          <button class="btn" id="ludo-dice-btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.rollLudoDice()" style="font-size:18px;height:48px;padding:0 24px">
+            🎲 Roll (${diceVal})
+          </button>
+          <div style="font-size:13px;color:var(--kr-mut)">
+            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Roll the dice' : 'Waiting for opponent…'}
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (room.gameType === 'chess') {
+    const board = (room.state && room.state.board) || [];
+    const pieceIcons = {
+      'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+      'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙', '.': ''
+    };
+
+    let selectedSquare = null;
+
+    boardHtml = `
+      <div style="display:flex;flex-direction:column;align-items:center;margin:16px 0">
+        <div class="chess-board" style="display:grid;grid-template-columns:repeat(8, 36px);grid-template-rows:repeat(8, 36px);border:3px solid #334155;border-radius:8px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.15)">
+          ${board.map((row, rIdx) => row.map((cell, cIdx) => {
+            const isLight = (rIdx + cIdx) % 2 === 0;
+            const bg = isLight ? '#F8FAFC' : '#94A3B8';
+            return `
+              <div class="chess-cell" data-r="${rIdx}" data-c="${cIdx}" style="width:36px;height:36px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;user-select:none">
+                ${pieceIcons[cell] || ''}
+              </div>
+            `;
+          }).join('')).join('')}
+        </div>
+        <div style="margin-top:14px;font-size:13px;color:var(--kr-mut)">
+          ${isMyTurn ? '<b style="color:var(--kr-brand)">Your Turn!</b> Tap piece then destination' : 'Opponent is thinking…'}
+        </div>
+      </div>
+    `;
+  } else if (room.gameType === 'carrom') {
+    const coins = (room.state && room.state.coins) || [];
+    boardHtml = `
+      <div style="display:flex;flex-direction:column;align-items:center;margin:16px 0">
+        <div class="carrom-board" style="width:300px;height:300px;background:#DEB887;border:10px solid #8B4513;border-radius:12px;position:relative;box-shadow:0 6px 20px rgba(0,0,0,0.2)">
+          <!-- 4 Corner Pockets -->
+          <div style="position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#000"></div>
+          <div style="position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:#000"></div>
+          <div style="position:absolute;bottom:4px;left:4px;width:24px;height:24px;border-radius:50%;background:#000"></div>
+          <div style="position:absolute;bottom:4px;right:4px;width:24px;height:24px;border-radius:50%;background:#000"></div>
+
+          <!-- Center Circle -->
+          <div style="position:absolute;top:110px;left:110px;width:80px;height:80px;border-radius:50%;border:2px dashed #8B4513;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:11px;font-weight:700;color:#8B4513">${coins.length} Coins</span>
+          </div>
+
+          <!-- Striker Position -->
+          <div style="position:absolute;bottom:24px;left:135px;width:30px;height:30px;border-radius:50%;background:#2563EB;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+          <button class="btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.strikeCarrom(0, 80)">
+            🎯 Strike
+          </button>
+          <div style="font-size:13px;color:var(--kr-mut)">
+            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Strike the coins into pockets' : 'Opponent is striking…'}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  modal.innerHTML = `
+    <div class="arcade-modal-card" style="max-width:440px;width:100%;margin:0 auto;background:var(--kr-bg);border-radius:24px;padding:20px;box-shadow:0 20px 40px rgba(0,0,0,0.3);position:relative">
+      <header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <h3 style="margin:0;font-size:18px">${gameTitles[room.gameType] || 'Arcade Game'}</h3>
+          <span style="font-size:12px;color:var(--kr-mut)">Room: <b style="letter-spacing:0.5px">${esc(room.id)}</b></span>
+        </div>
+        <button class="ib sm" onclick="ArcadeEngine.leaveRoom()" title="Leave Game">✕</button>
+      </header>
+
+      <!-- Players Header Bar -->
+      <div style="display:flex;gap:10px;padding:10px 12px;background:var(--kr-bg2);border-radius:14px;border:1px solid var(--kr-line)">
+        ${players.map(p => `
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+            <div class="av sm" style="background:${esc(colorFor(p.uid))};position:relative">
+              ${p.photo ? `<img src="${esc(p.photo)}" alt="">` : esc(initials(p.name))}
+              ${room.turn === p.uid ? `<div style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:var(--kr-ok);border:2px solid #fff"></div>` : ''}
+            </div>
+            <div style="min-width:0">
+              <div style="font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</div>
+              <div style="font-size:11px;color:var(--kr-mut)">Score: ${p.score || 0}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      ${room.status === 'ended' ? `
+        <div style="margin:16px 0;padding:16px;background:#DCFCE7;border-radius:16px;text-align:center">
+          <div style="font-size:28px;margin-bottom:4px">🏆</div>
+          <div style="font-weight:800;font-size:16px;color:#166534">
+            ${room.winner === ST.me.uid ? 'You Won!' : 'Match Completed!'}
+          </div>
+          <button class="btn sm" onclick="ArcadeEngine.createRoom('${room.gameType}', ${room.maxPlayers})" style="margin-top:10px">Play Again</button>
+        </div>
+      ` : boardHtml}
+    </div>
+  `;
+
+  // Wire Chess clicks
+  if (room.gameType === 'chess' && isMyTurn) {
+    let selected = null;
+    $$('.chess-cell', modal).forEach(cell => {
+      cell.onclick = () => {
+        const r = parseInt(cell.dataset.r, 10);
+        const c = parseInt(cell.dataset.c, 10);
+        if (!selected) {
+          selected = { r, c };
+          cell.style.outline = '3px solid var(--kr-brand)';
+        } else {
+          ArcadeEngine.executeChessMove(selected.r, selected.c, r, c);
+          selected = null;
+        }
+      };
+    });
+  }
+}
 
 
 /* ============================ DISCOVER & PRESENCE ============================
@@ -6139,7 +7897,18 @@ function openChat(targetId, type, cid) {
 
   listen('chat:pins', 'pins/' + cid, 'value', sn => { ST.pinned = sn.val() || {}; });
 
+  // Save current chat draft before switching
+  if (ST.chat && s('chat-input')) {
+    try { localStorage.setItem('klyro_draft_' + ST.chat.cid, s('chat-input').value); } catch (e) {}
+  }
+
   Nav.go('chat', { targetId: targetId, type: type, cid: cid });
+
+  // Restore draft for this chat
+  if (s('chat-input')) {
+    try { s('chat-input').value = localStorage.getItem('klyro_draft_' + cid) || ''; } catch (e) {}
+  }
+
   setTimeout(() => scrollToBottom(), 80);
 }
 
@@ -6244,6 +8013,20 @@ function bodyHTML(m) {
     `;
   }
   if (m.type === 'sticker') return `<div style="font-size:46px;line-height:1.1">${esc(m.sticker || '🙂')}</div>`;
+  if (m.type === 'game_invite') {
+    const isMine = m.sender === ST.me.uid;
+    const gameNames = { ludo: '🎲 Ludo Club', chess: '♟️ Speed Chess', carrom: '🎯 Carrom Strike' };
+    const title = gameNames[m.gameType] || '🎮 Arcade Match';
+    return `
+      <div class="game-invite-card" style="min-width:210px;padding:6px 2px">
+        <div style="font-weight:700;font-size:14px;margin-bottom:3px">${title}</div>
+        <div style="font-size:12.5px;opacity:0.9;margin-bottom:10px">${esc(m.text || 'Challenged you to a game!')}</div>
+        <button class="btn sm" onclick="ArcadeEngine.joinRoom('${esc(m.gameType)}', '${esc(m.roomId)}')" style="width:100%;background:#fff;color:var(--kr-brand);font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.15)">
+          ${isMine ? 'Open Game Room' : 'Accept & Play'}
+        </button>
+      </div>
+    `;
+  }
   if (m.type === 'poll' && m.poll) return pollHTML(m);
   if (['image','video','audio','voice','file'].indexOf(m.type) >= 0) {
     const md = m.media || {};
@@ -7009,7 +8792,7 @@ async function doTransactionalSignup() {
       createdAt: now(),
       status: 'online',
       lastSeen: now(),
-      onboardingComplete: false, // Triggers guided first-run onboarding
+      onboardingComplete: true, // Complete! Email signup already provided username, name and preferences
       privacy: DEFAULT_PRIVACY,
       settings: DEFAULT_SETTINGS
     };
@@ -7032,8 +8815,10 @@ async function doTransactionalSignup() {
     updates['publicProfiles/' + uid] = publicProfile;
 
     await db.ref().update(updates);
+    ST.me = profile;
     errEl.textContent = '';
-    /* OnAuthStateChanged will pick up the user and trigger onboarding */
+    toast('Account created! Welcome to KLYRO, @' + unRaw.value + '!');
+    AuthState.set(AuthState.READY);
   } catch (err) {
     btn.disabled = false;
     btn.textContent = 'Create account';
@@ -7134,7 +8919,7 @@ function showSetupProfile() {
           color: colorFor(ST.me.uid),
           status: 'online',
           lastSeen: now(),
-          onboardingComplete: false,
+          onboardingComplete: true,
           privacy: DEFAULT_PRIVACY,
           settings: DEFAULT_SETTINGS
         };
@@ -7156,13 +8941,22 @@ function showSetupProfile() {
         updates['publicProfiles/' + ST.me.uid] = publicPatch;
 
         await db.ref().update(updates);
+        ST.me = Object.assign(ST.me || {}, profilePatch);
         errEl.textContent = '';
+        toast('Welcome to KLYRO, @' + unVal.value + '!');
+        AuthState.set(AuthState.READY);
+        return;
       } catch (e) {
         errEl.textContent = 'Could not save profile — please retry.';
       }
       save.disabled = false;
       save.textContent = 'Enter KLYRO';
     };
+
+    const unInput = s('setup-username');
+    if (unInput) {
+      unInput.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } };
+    }
   }
 }
 
@@ -7193,24 +8987,35 @@ async function handleAvatarPick(file, boxId, done) {
    ================================================================================== */
 function showFirstRunOnboarding() {
   const card = s('onboarding-card');
-  if (!card) return;
+  if (!card || !ST.me) return;
 
-  let currentStep = 1;
-  const totalSteps = 7;
   let tempPhoto = ST.me.photo || '';
   let tempUsername = ST.me.username || '';
   let tempName = ST.me.name || '';
   let tempBio = ST.me.bio || '';
   let tempCountry = ST.me.country || '';
 
+  // Build steps dynamically so known fields are NEVER asked twice!
+  const steps = ['welcome'];
+  if (!tempPhoto) steps.push('photo');
+  if (!tempUsername) steps.push('username');
+  if (!tempName) steps.push('name');
+  if (!tempBio && !tempCountry) steps.push('bio');
+  steps.push('discover');
+  steps.push('finish');
+
+  let currentStep = 1;
+  const totalSteps = steps.length;
+
   function renderStep() {
+    const stepName = steps[currentStep - 1] || 'finish';
     const dots = Array.from({ length: totalSteps }, (_, i) => `
       <div class="ob-dot ${i + 1 === currentStep ? 'active' : ''}"></div>
     `).join('');
 
     let content = `<div class="ob-dots">${dots}</div>`;
 
-    if (currentStep === 1) {
+    if (stepName === 'welcome') {
       content += `
         <div style="text-align:center;padding:12px 0">
           <div class="brand-mark" style="width:58px;height:58px;border-radius:18px;font-size:28px;margin:0 auto 16px">K</div>
@@ -7221,7 +9026,7 @@ function showFirstRunOnboarding() {
           <button class="btn block" id="ob-next">Get Started</button>
         </div>
       `;
-    } else if (currentStep === 2) {
+    } else if (stepName === 'photo') {
       content += `
         <h3 style="margin:0 0 4px">Choose a profile photo</h3>
         <p style="color:var(--kr-mut);font-size:13.5px;margin:0 0 16px">Add a photo so your contacts can recognize you.</p>
@@ -7235,7 +9040,7 @@ function showFirstRunOnboarding() {
         <button class="btn block" id="ob-next">Continue</button>
         <button class="btn block ghost" id="ob-skip" style="margin-top:8px">Skip for now</button>
       `;
-    } else if (currentStep === 3) {
+    } else if (stepName === 'username') {
       content += `
         <h3 style="margin:0 0 4px">Choose your @username</h3>
         <p style="color:var(--kr-mut);font-size:13.5px;margin:0 0 14px">Your unique handle for finding friends on KLYRO.</p>
@@ -7247,7 +9052,7 @@ function showFirstRunOnboarding() {
         <div class="err" id="ob-un-err"></div>
         <button class="btn block" id="ob-next">Continue</button>
       `;
-    } else if (currentStep === 4) {
+    } else if (stepName === 'name') {
       content += `
         <h3 style="margin:0 0 4px">Confirm your display name</h3>
         <p style="color:var(--kr-mut);font-size:13.5px;margin:0 0 14px">This name appears in chats and conversations.</p>
@@ -7258,7 +9063,7 @@ function showFirstRunOnboarding() {
         <div class="err" id="ob-name-err"></div>
         <button class="btn block" id="ob-next">Continue</button>
       `;
-    } else if (currentStep === 5) {
+    } else if (stepName === 'bio') {
       content += `
         <h3 style="margin:0 0 4px">Add bio &amp; country</h3>
         <p style="color:var(--kr-mut);font-size:13.5px;margin:0 0 14px">Optional details shown on your public profile.</p>
@@ -7274,8 +9079,9 @@ function showFirstRunOnboarding() {
           </select>
         </div>
         <button class="btn block" id="ob-next">Continue</button>
+        <button class="btn block ghost" id="ob-skip" style="margin-top:8px">Skip for now</button>
       `;
-    } else if (currentStep === 6) {
+    } else if (stepName === 'discover') {
       const onlinePool = getOnlineDiscoverPool().slice(0, 3);
       content += `
         <h3 style="margin:0 0 4px">Connect with people online</h3>
@@ -7293,7 +9099,7 @@ function showFirstRunOnboarding() {
         </div>
         <button class="btn block" id="ob-next">Next</button>
       `;
-    } else if (currentStep === 7) {
+    } else if (stepName === 'finish') {
       content += `
         <div style="text-align:center;padding:12px 0">
           <div style="font-size:48px;margin-bottom:10px">🎉</div>
@@ -7322,7 +9128,7 @@ function showFirstRunOnboarding() {
 
     if (s('ob-next')) {
       s('ob-next').onclick = async () => {
-        if (currentStep === 3) {
+        if (stepName === 'username') {
           const r = validateUsername(s('ob-un-in').value);
           if (!r.ok) { s('ob-un-err').textContent = r.msg; return; }
           if (r.value !== ST.me.username) {
@@ -7332,13 +9138,14 @@ function showFirstRunOnboarding() {
             await claimUsername(r.value, ST.me.uid);
             tempUsername = r.value;
           }
-        } else if (currentStep === 4) {
+        } else if (stepName === 'name') {
           const nm = (s('ob-name-in').value || '').trim();
           if (!nm) { s('ob-name-err').textContent = 'Please provide a display name.'; return; }
           tempName = nm;
-        } else if (currentStep === 5) {
-          tempBio = s('ob-bio-in').value.trim().slice(0, 160);
-          tempCountry = s('ob-country-in').value;
+        } else if (stepName === 'bio') {
+          const bEl = s('ob-bio-in'), cEl = s('ob-country-in');
+          if (bEl) tempBio = bEl.value.trim().slice(0, 160);
+          if (cEl) tempCountry = cEl.value;
         }
 
         currentStep++;
@@ -7382,6 +9189,7 @@ function showFirstRunOnboarding() {
           ST.me = Object.assign(ST.me, profilePatch);
           Nav.close('ov-onboarding');
           toast('Profile complete! Welcome to KLYRO.');
+          AuthState.set(AuthState.READY);
           renderChats(); renderPeople(); renderStatus();
         } catch (e) {
           toast('Could not save profile — try again.');
@@ -7774,6 +9582,8 @@ function initLiveApp() {
   listenRequests();
   MediaEngine.init();
   StatusEngine.init();
+  if (typeof PostsEngine !== 'undefined') PostsEngine.init();
+  if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.init();
   Calls.listenCalls();
   presence(ST.me.uid);
   registerDevice(ST.me.uid);
@@ -7783,6 +9593,8 @@ function initLiveApp() {
   renderChats();
   renderPeople();
   renderStatus();
+  if (typeof renderPosts === 'function') renderPosts();
+  if (typeof renderArcade === 'function') renderArcade();
   renderSettings();
 
   if ('Notification' in window && Notification.permission === 'default') {
@@ -7808,6 +9620,8 @@ function bootKlyro() {
       unlistenAll();
       MediaEngine.teardown();
       StatusEngine.teardown();
+      if (typeof PostsEngine !== 'undefined') PostsEngine.teardown();
+      if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.teardown();
       Calls.end(true);
       AuthState.set(AuthState.SIGNED_OUT);
       return;

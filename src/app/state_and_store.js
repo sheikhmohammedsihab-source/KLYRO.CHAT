@@ -7,6 +7,7 @@ const AuthState = {
   AUTHENTICATING: 'AUTHENTICATING',
   SIGNED_IN_PROFILE_LOADING: 'SIGNED_IN_PROFILE_LOADING',
   PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
+  ONBOARDING: 'ONBOARDING',
   READY: 'READY',
   current: 'BOOTING',
 
@@ -18,6 +19,7 @@ const AuthState = {
         Nav.go('loading', null, { replace: true });
         break;
       case this.SIGNED_OUT:
+        Nav.closeAllOverlays();
         Nav.go('auth', null, { replace: true, force: true });
         switchAuth('login');
         break;
@@ -32,7 +34,11 @@ const AuthState = {
       case this.PROFILE_INCOMPLETE:
         showSetupProfile();
         break;
+      case this.ONBOARDING:
+        showFirstRunOnboarding(meta);
+        break;
       case this.READY:
+        Nav.closeAllOverlays();
         Nav.go('main', { tab: Nav.tab || 'chats' }, { replace: true });
         break;
     }
@@ -63,7 +69,13 @@ const ST = {
   uploads: {},
   transferMeta: {},
   drafts: {},
-  onlinePool: {}
+  onlinePool: {},
+  posts: {},
+  postLikes: {},
+  postComments: {},
+  userSaves: {},
+  arcadeGames: {},
+  activeGame: null
 };
 window.KLYRO_DEBUG = false;
 
@@ -127,13 +139,16 @@ const Nav = {
   _renderTab() {
     $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + this.tab));
     $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === this.tab));
-    const titles = { chats: 'Chats', status: 'Status', people: 'Discover', settings: 'Settings' };
+    const titles = { home: 'KLYRO', chats: 'Chats', status: 'Status', posts: 'Pulse', arcade: 'Arcade', people: 'Discover', settings: 'Settings' };
     if (s('main-title')) s('main-title').textContent = titles[this.tab] || 'KLYRO';
-    if (s('search-wrap')) s('search-wrap').style.display = (this.tab === 'chats' || this.tab === 'people') ? 'block' : 'none';
-    if (s('fab')) s('fab').style.display = (this.tab === 'chats' || this.tab === 'people' || this.tab === 'status') ? 'flex' : 'none';
+    if (s('search-wrap')) s('search-wrap').style.display = (this.tab === 'chats' || this.tab === 'people' || this.tab === 'posts') ? 'block' : 'none';
+    if (s('fab')) s('fab').style.display = (this.tab === 'chats' || this.tab === 'people' || this.tab === 'status' || this.tab === 'posts') ? 'flex' : 'none';
     
+    if (this.tab === 'home' && typeof renderHome === 'function') renderHome();
     if (this.tab === 'chats') renderChats();
     if (this.tab === 'status') renderStatus();
+    if (this.tab === 'posts' && typeof renderPosts === 'function') renderPosts();
+    if (this.tab === 'arcade' && typeof renderArcade === 'function') renderArcade();
     if (this.tab === 'people') renderPeople();
     if (this.tab === 'settings') renderSettings();
   },
@@ -168,6 +183,15 @@ const Nav = {
     if (id === 'ov-story' && typeof StoryViewer !== 'undefined' && StoryViewer.stop) {
       StoryViewer.stop();
     }
+  },
+
+  closeAllOverlays() {
+    while (this.overlays.length) {
+      const id = this.overlays.pop();
+      const el = s(id);
+      if (el) el.classList.remove('open');
+    }
+    document.body.style.overflow = '';
   },
 
   closeTop() {

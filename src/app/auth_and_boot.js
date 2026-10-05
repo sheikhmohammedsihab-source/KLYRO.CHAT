@@ -197,7 +197,7 @@ async function doTransactionalSignup() {
       createdAt: now(),
       status: 'online',
       lastSeen: now(),
-      onboardingComplete: false, // Triggers guided first-run onboarding
+      onboardingComplete: true, // Complete! Email signup already provided username, name and preferences
       privacy: DEFAULT_PRIVACY,
       settings: DEFAULT_SETTINGS
     };
@@ -220,8 +220,10 @@ async function doTransactionalSignup() {
     updates['publicProfiles/' + uid] = publicProfile;
 
     await db.ref().update(updates);
+    ST.me = profile;
     errEl.textContent = '';
-    /* OnAuthStateChanged will pick up the user and trigger onboarding */
+    toast('Account created! Welcome to KLYRO, @' + unRaw.value + '!');
+    AuthState.set(AuthState.READY);
   } catch (err) {
     btn.disabled = false;
     btn.textContent = 'Create account';
@@ -322,7 +324,7 @@ function showSetupProfile() {
           color: colorFor(ST.me.uid),
           status: 'online',
           lastSeen: now(),
-          onboardingComplete: false,
+          onboardingComplete: true,
           privacy: DEFAULT_PRIVACY,
           settings: DEFAULT_SETTINGS
         };
@@ -344,13 +346,22 @@ function showSetupProfile() {
         updates['publicProfiles/' + ST.me.uid] = publicPatch;
 
         await db.ref().update(updates);
+        ST.me = Object.assign(ST.me || {}, profilePatch);
         errEl.textContent = '';
+        toast('Welcome to KLYRO, @' + unVal.value + '!');
+        AuthState.set(AuthState.READY);
+        return;
       } catch (e) {
         errEl.textContent = 'Could not save profile — please retry.';
       }
       save.disabled = false;
       save.textContent = 'Enter KLYRO';
     };
+
+    const unInput = s('setup-username');
+    if (unInput) {
+      unInput.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); save.click(); } };
+    }
   }
 }
 
@@ -381,24 +392,35 @@ async function handleAvatarPick(file, boxId, done) {
    ================================================================================== */
 function showFirstRunOnboarding() {
   const card = s('onboarding-card');
-  if (!card) return;
+  if (!card || !ST.me) return;
 
-  let currentStep = 1;
-  const totalSteps = 7;
   let tempPhoto = ST.me.photo || '';
   let tempUsername = ST.me.username || '';
   let tempName = ST.me.name || '';
   let tempBio = ST.me.bio || '';
   let tempCountry = ST.me.country || '';
 
+  // Build steps dynamically so known fields are NEVER asked twice!
+  const steps = ['welcome'];
+  if (!tempPhoto) steps.push('photo');
+  if (!tempUsername) steps.push('username');
+  if (!tempName) steps.push('name');
+  if (!tempBio && !tempCountry) steps.push('bio');
+  steps.push('discover');
+  steps.push('finish');
+
+  let currentStep = 1;
+  const totalSteps = steps.length;
+
   function renderStep() {
+    const stepName = steps[currentStep - 1] || 'finish';
     const dots = Array.from({ length: totalSteps }, (_, i) => `
       <div class="ob-dot ${i + 1 === currentStep ? 'active' : ''}"></div>
     `).join('');
 
     let content = `<div class="ob-dots">${dots}</div>`;
 
-    if (currentStep === 1) {
+    if (stepName === 'welcome') {
       content += `
         <div style="text-align:center;padding:12px 0">
           <div class="brand-mark" style="width:58px;height:58px;border-radius:18px;font-size:28px;margin:0 auto 16px">K</div>
@@ -409,7 +431,7 @@ function showFirstRunOnboarding() {
           <button class="btn block" id="ob-next">Get Started</button>
         </div>
       `;
-    } else if (currentStep === 2) {
+    } else if (stepName === 'photo') {
       content += `
         <h3 style="margin:0 0 4px">Choose a profile photo</h3>
         <p style="color:var(--kr-mut);font-size:13.5px;margin:0 0 16px">Add a photo so your contacts can recognize you.</p>
@@ -423,7 +445,7 @@ function showFirstRunOnboarding() {
         <button class="btn block" id="ob-next">Continue</button>
         <button class="btn block ghost" id="ob-skip" style="margin-top:8px">Skip for now</button>
       `;
-    } else if (currentStep === 3) {
+    } else if (stepName === 'username') {
       content += `
         <h3 style="margin:0 0 4px">Choose your @username</h3>
         <p style="color:var(--kr-mut);font-size:13.5px;margin:0 0 14px">Your unique handle for finding friends on KLYRO.</p>
@@ -435,7 +457,7 @@ function showFirstRunOnboarding() {
         <div class="err" id="ob-un-err"></div>
         <button class="btn block" id="ob-next">Continue</button>
       `;
-    } else if (currentStep === 4) {
+    } else if (stepName === 'name') {
       content += `
         <h3 style="margin:0 0 4px">Confirm your display name</h3>
         <p style="color:var(--kr-mut);font-size:13.5px;margin:0 0 14px">This name appears in chats and conversations.</p>
@@ -446,7 +468,7 @@ function showFirstRunOnboarding() {
         <div class="err" id="ob-name-err"></div>
         <button class="btn block" id="ob-next">Continue</button>
       `;
-    } else if (currentStep === 5) {
+    } else if (stepName === 'bio') {
       content += `
         <h3 style="margin:0 0 4px">Add bio &amp; country</h3>
         <p style="color:var(--kr-mut);font-size:13.5px;margin:0 0 14px">Optional details shown on your public profile.</p>
@@ -462,8 +484,9 @@ function showFirstRunOnboarding() {
           </select>
         </div>
         <button class="btn block" id="ob-next">Continue</button>
+        <button class="btn block ghost" id="ob-skip" style="margin-top:8px">Skip for now</button>
       `;
-    } else if (currentStep === 6) {
+    } else if (stepName === 'discover') {
       const onlinePool = getOnlineDiscoverPool().slice(0, 3);
       content += `
         <h3 style="margin:0 0 4px">Connect with people online</h3>
@@ -481,7 +504,7 @@ function showFirstRunOnboarding() {
         </div>
         <button class="btn block" id="ob-next">Next</button>
       `;
-    } else if (currentStep === 7) {
+    } else if (stepName === 'finish') {
       content += `
         <div style="text-align:center;padding:12px 0">
           <div style="font-size:48px;margin-bottom:10px">🎉</div>
@@ -510,7 +533,7 @@ function showFirstRunOnboarding() {
 
     if (s('ob-next')) {
       s('ob-next').onclick = async () => {
-        if (currentStep === 3) {
+        if (stepName === 'username') {
           const r = validateUsername(s('ob-un-in').value);
           if (!r.ok) { s('ob-un-err').textContent = r.msg; return; }
           if (r.value !== ST.me.username) {
@@ -520,13 +543,14 @@ function showFirstRunOnboarding() {
             await claimUsername(r.value, ST.me.uid);
             tempUsername = r.value;
           }
-        } else if (currentStep === 4) {
+        } else if (stepName === 'name') {
           const nm = (s('ob-name-in').value || '').trim();
           if (!nm) { s('ob-name-err').textContent = 'Please provide a display name.'; return; }
           tempName = nm;
-        } else if (currentStep === 5) {
-          tempBio = s('ob-bio-in').value.trim().slice(0, 160);
-          tempCountry = s('ob-country-in').value;
+        } else if (stepName === 'bio') {
+          const bEl = s('ob-bio-in'), cEl = s('ob-country-in');
+          if (bEl) tempBio = bEl.value.trim().slice(0, 160);
+          if (cEl) tempCountry = cEl.value;
         }
 
         currentStep++;
@@ -570,6 +594,7 @@ function showFirstRunOnboarding() {
           ST.me = Object.assign(ST.me, profilePatch);
           Nav.close('ov-onboarding');
           toast('Profile complete! Welcome to KLYRO.');
+          AuthState.set(AuthState.READY);
           renderChats(); renderPeople(); renderStatus();
         } catch (e) {
           toast('Could not save profile — try again.');
@@ -962,6 +987,8 @@ function initLiveApp() {
   listenRequests();
   MediaEngine.init();
   StatusEngine.init();
+  if (typeof PostsEngine !== 'undefined') PostsEngine.init();
+  if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.init();
   Calls.listenCalls();
   presence(ST.me.uid);
   registerDevice(ST.me.uid);
@@ -971,6 +998,8 @@ function initLiveApp() {
   renderChats();
   renderPeople();
   renderStatus();
+  if (typeof renderPosts === 'function') renderPosts();
+  if (typeof renderArcade === 'function') renderArcade();
   renderSettings();
 
   if ('Notification' in window && Notification.permission === 'default') {
@@ -996,6 +1025,8 @@ function bootKlyro() {
       unlistenAll();
       MediaEngine.teardown();
       StatusEngine.teardown();
+      if (typeof PostsEngine !== 'undefined') PostsEngine.teardown();
+      if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.teardown();
       Calls.end(true);
       AuthState.set(AuthState.SIGNED_OUT);
       return;

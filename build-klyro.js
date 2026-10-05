@@ -14,6 +14,8 @@ const jsFiles = [
   'src/app/media_engine.js',
   'src/app/core_ui_and_events.js',
   'src/app/status_engine.js',
+  'src/app/posts_and_pulse.js',
+  'src/app/arcade_engine.js',
   'src/app/discover_and_presence.js',
   'src/app/gif_engine.js',
   'src/app/chat_and_calls.js',
