@@ -1,0 +1,39 @@
+# Deploys this repository to Dplooy on every push.
+# Added from the Dplooy dashboard (project -> GitHub -> Build).
+# Delete this file to turn the pipeline off.
+# Installed: 2026-10-05T07:51:52.859Z
+name: Deploy to Dplooy
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Build
+        run: npm run build
+
+      - name: Package build output
+        run: |
+          cd "dist"
+          zip -r "$GITHUB_WORKSPACE/dplooy-deploy.zip" .
+
+      - name: Deploy to Dplooy
+        run: |
+          curl --fail-with-body -sS -X POST "https://api.dplooy.com/api/v1/deploy/zip" \
+            -H "Authorization: Bearer ${{ secrets.DPLOOY_API_KEY }}" \
+            -F "file=@dplooy-deploy.zip;type=application/zip" \
+            -F "name=klyrochat"
