@@ -1,0 +1,6 @@
+{
+  "name": "KLYRO",
+  "description": "Fast, private, real-time messaging with live stories, discover, voice and WebRTC calls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
