@@ -134,9 +134,9 @@ function wireAuth() {
 
 function switchAuth(which) {
   const l = s('login-form'), su = s('signup-form'), p = s('setup-panel');
-  if (l) l.style.display = which === 'login' ? 'block' : 'none';
-  if (su) su.style.display = which === 'signup' ? 'block' : 'none';
-  if (p) p.style.display = which === 'setup' ? 'block' : 'none';
+  if (l && l.style) l.style.display = which === 'login' ? 'block' : 'none';
+  if (su && su.style) su.style.display = which === 'signup' ? 'block' : 'none';
+  if (p && p.style) p.style.display = which === 'setup' ? 'block' : 'none';
 }
 
 /* ---------------- Transactional / Rollback-Safe Signup ---------------- */

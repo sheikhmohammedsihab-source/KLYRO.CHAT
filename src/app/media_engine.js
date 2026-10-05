@@ -1,5 +1,42 @@
 /* ============================ MEDIA ENGINE (P2P + COMPRESSION) ============================ */
 
+/* ============================ UPLOAD / TRANSFER BAR ============================ */
+const UpBar = {
+  timer: null,
+  show(name) {
+    const b = s('upload-bar'); if (!b) return;
+    const n = s('ub-name'), st = s('ub-state'), pr = s('ub-progress');
+    if (n) n.textContent = name || 'Preparing…';
+    if (st) st.textContent = '0%';
+    if (pr) pr.style.width = '0%';
+    b.classList.add('show');
+  },
+  set(pct, text) {
+    const p = clamp(pct || 0, 0, 1);
+    const i = s('ub-progress'); if (i) i.style.width = Math.round(p * 100) + '%';
+    const st = s('ub-state');
+    if (st) st.textContent = text || (Math.round(p * 100) + '%');
+  },
+  done(text, ms) {
+    const b = s('upload-bar'); if (!b) return;
+    const i = s('ub-progress'), st = s('ub-state');
+    if (i) i.style.width = '100%';
+    if (st) st.textContent = text || 'Sent';
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => { if (b) b.classList.remove('show'); }, ms || 1600);
+  },
+  fail(text) {
+    const b = s('upload-bar'); if (!b) return;
+    const st = s('ub-state');
+    if (st) st.textContent = text || 'Could not complete transfer';
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => { if (b) b.classList.remove('show'); }, 3800);
+  },
+  hide() {
+    const b = s('upload-bar'); if (b) b.classList.remove('show');
+  }
+};
+
 function blobToDataURL(blob) {
   return new Promise((res, rej) => {
     const r = new FileReader();

@@ -648,8 +648,8 @@ const Calls = {
 
   ui(state) {
     const out = s('call-controls-out'), inc = s('call-controls-in');
-    if (out) out.style.display = state === 'outgoing' ? 'flex' : 'none';
-    if (inc) inc.style.display = state === 'incoming' ? 'flex' : 'none';
+    if (out && out.style) out.style.display = state === 'outgoing' ? 'flex' : 'none';
+    if (inc && inc.style) inc.style.display = state === 'incoming' ? 'flex' : 'none';
   },
 
   async start(isVideo) {
@@ -836,7 +836,18 @@ const Calls = {
   },
 
   end(silent) {
-    const r = s('ringtone'); if (r) { r.pause(); r.currentTime = 0; }
+    try {
+      const r = s('ringtone');
+      if (r && typeof r.pause === 'function') {
+        r.pause();
+        r.currentTime = 0;
+      }
+    } catch (e) {}
+
+    if (!ST.call && !this.pc && !this.id) {
+      return;
+    }
+
     const id = this.id || (ST.call && ST.call.id);
     if (id && this.pc) {
       db.ref('calls/' + id).update({ state: 'ended', endedAt: now() }).catch(() => {});

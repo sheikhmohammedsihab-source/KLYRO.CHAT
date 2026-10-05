@@ -11,8 +11,8 @@ const markup = fs.readFileSync(path.join(__dirname, 'src/app/markup.html'), 'utf
 const jsFiles = [
   'src/app/contract_and_config.js',
   'src/app/state_and_store.js',
-  'src/app/core_ui_and_events.js',
   'src/app/media_engine.js',
+  'src/app/core_ui_and_events.js',
   'src/app/status_engine.js',
   'src/app/discover_and_presence.js',
   'src/app/gif_engine.js',
@@ -40,6 +40,16 @@ const finalHTML = `<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+// Global cross-origin script error protection for embedded iframe environment
+window.addEventListener('error', function(e) {
+  if (e && (e.message === 'Script error.' || (e.filename && e.filename.indexOf('pushalert') !== -1))) {
+    if (typeof e.preventDefault === 'function') e.preventDefault();
+    if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    return true;
+  }
+}, true);
+</script>
 <style>
 ${styles}
 </style>
@@ -55,16 +65,6 @@ ${markup}
 <!-- KLYRO Engine -->
 <script>
 ${jsBundle}
-</script>
-
-<!-- PushAlert Unified Code (Preserved) -->
-<script type="text/javascript">
-    (function(d, t) {
-        var g = d.createElement(t),
-        s = d.getElementsByTagName(t)[0];
-        g.src = "https://cdn.pushalert.co/unified_4bb73ff40f7bc5d3ed572f12f734ba14.js";
-        s.parentNode.insertBefore(g, s);
-    }(document, "script"));
 </script>
 </body>
 </html>
