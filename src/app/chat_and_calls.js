@@ -299,10 +299,12 @@ function linkify(text) {
 
 function metaHTML(m) {
   const mine = m.sender === ST.me.uid;
-  if (!mine) return '';
   const direct = !ST.chat || ST.chat.type === 'direct';
   const read = m.status === 'seen';
-  return `<div class="meta">${esc(fmtTime(m.timestamp))}${m.edited ? ' · edited' : ''}${direct ? ' ' + tick(read) : ''}</div>`;
+  const ts = m.timestamp || m.createdAt || now();
+  const timeStr = fmtTime(ts);
+  const fullTime = fmtFullTime(ts);
+  return `<div class="meta" title="Sent ${esc(fullTime)}" onclick="event.stopPropagation();openMessageDetails('${esc(m.key)}')">${esc(timeStr)}${m.edited ? ' · edited' : ''}${mine && direct ? ' ' + tick(read) : ''}</div>`;
 }
 
 function reactionsHTML(m) {
@@ -328,18 +330,7 @@ function bodyHTML(m) {
   }
   if (m.type === 'sticker') return `<div style="font-size:46px;line-height:1.1">${esc(m.sticker || '🙂')}</div>`;
   if (m.type === 'game_invite') {
-    const isMine = m.sender === ST.me.uid;
-    const gameNames = { ludo: '🎲 Ludo Club', chess: '♟️ Speed Chess', carrom: '🎯 Carrom Strike' };
-    const title = gameNames[m.gameType] || '🎮 Arcade Match';
-    return `
-      <div class="game-invite-card" style="min-width:210px;padding:6px 2px">
-        <div style="font-weight:700;font-size:14px;margin-bottom:3px">${title}</div>
-        <div style="font-size:12.5px;opacity:0.9;margin-bottom:10px">${esc(m.text || 'Challenged you to a game!')}</div>
-        <button class="btn sm" onclick="ArcadeEngine.joinRoom('${esc(m.gameType)}', '${esc(m.roomId)}')" style="width:100%;background:#fff;color:var(--kr-brand);font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.15)">
-          ${isMine ? 'Open Game Room' : 'Accept & Play'}
-        </button>
-      </div>
-    `;
+    return `<div style="font-size:13px;opacity:0.85;padding:4px 0">${esc(m.text || 'Game match invite')}</div>`;
   }
   if (m.type === 'poll' && m.poll) return pollHTML(m);
   if (['image','video','audio','voice','file'].indexOf(m.type) >= 0) {
@@ -381,11 +372,13 @@ function pollHTML(m) {
 function renderMessage(m) {
   const box = s('chat-messages'); if (!box || !m) return;
   const mine = m.sender === ST.me.uid;
+  const ts = m.timestamp || m.createdAt || now();
+  const dateStr = fmtMessageDate(ts);
   const prevSep = box.querySelector('.daysep:last-of-type');
-  const sepHTML = (prevSep && prevSep.textContent === fmtDay(m.timestamp)) ? '' : `<div class="daysep">${esc(fmtDay(m.timestamp))}</div>`;
+  const sepHTML = (prevSep && prevSep.textContent === dateStr) ? '' : `<div class="daysep">${esc(dateStr)}</div>`;
   const senderName = (!mine && ST.chat && ST.chat.type === 'group')
     ? `<div class="sender">${esc(userLabel(ST.users[m.sender] || { uid: m.sender }))}</div>` : '';
-  const reply = m.replyTo ? `<div class="reply-q"><b>${esc(m.replyTo.name || 'Reply')}</b><span>${esc(m.replyTo.text || 'Attachment')}</span></div>` : '';
+  const reply = m.replyTo ? `<div class="reply-q" onclick="scrollToMsg('${esc(m.replyTo.key)}')" title="Tap to jump to quoted message"><b>${esc(m.replyTo.name || 'Reply')}</b><span>${esc(m.replyTo.text || 'Attachment')}</span></div>` : '';
   const fwd = m.forwarded ? '<div style="font-size:11px;opacity:0.8;font-style:italic;margin-bottom:3px">↪ Forwarded</div>' : '';
   const isMedia = ['image','video','audio','voice','file'].indexOf(m.type) >= 0;
 
@@ -408,6 +401,62 @@ function renderMessage(m) {
     if (m.media && (m.media.kind === 'p2p' || m.media.kind === 'inline')) hydrateMedia(m);
   }
   updateEmptyState();
+}
+
+function scrollToMsg(key) {
+  if (!key) return;
+  const el = s('m-' + key);
+  if (!el) {
+    toast('Original message is not in current view or was deleted.');
+    return;
+  }
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('highlight-msg');
+  setTimeout(() => el.classList.remove('highlight-msg'), 1600);
+}
+
+function openMessageDetails(key) {
+  const m = (ST.chatMsgs && ST.chatMsgs[key]) || null;
+  if (!m) return;
+  const mine = m.sender === ST.me.uid;
+  const author = mine ? 'You' : userLabel(ST.users[m.sender] || { uid: m.sender });
+  const ts = m.timestamp || m.createdAt || now();
+  const statusStr = mine ? (m.status === 'seen' ? '✓✓ Seen / Read' : m.status === 'delivered' ? '✓✓ Delivered' : '✓ Sent') : 'Received';
+  const seenStr = m.seenAt ? ` · read at ${fmtTime(m.seenAt)}` : '';
+
+  openModal(`
+    <div class="pad">
+      <h3 style="margin:0 0 16px;font-size:17px">Message Details</h3>
+      <div style="display:flex;flex-direction:column;gap:14px;font-size:14px">
+        <div>
+          <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Sender</div>
+          <div style="font-weight:700;margin-top:2px">${esc(author)}</div>
+        </div>
+        <div>
+          <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Sent Timestamp</div>
+          <div style="font-weight:600;margin-top:2px">${esc(fmtFullTime(ts))}</div>
+        </div>
+        <div>
+          <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Status</div>
+          <div style="font-weight:600;margin-top:2px">${esc(statusStr + seenStr)}</div>
+        </div>
+        <div>
+          <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Message Type</div>
+          <div style="font-weight:600;margin-top:2px;text-transform:capitalize">${esc(m.type || 'text')}</div>
+        </div>
+        ${m.replyTo ? `
+          <div>
+            <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Reply Target</div>
+            <div style="padding:10px 12px;background:var(--kr-bg2);border-radius:12px;border-left:3px solid var(--kr-brand);margin-top:4px">
+              <div style="font-weight:700;font-size:13px">${esc(m.replyTo.name || 'Message')}</div>
+              <div style="font-size:13px;color:var(--kr-mut);margin-top:2px">${esc(m.replyTo.text || '')}</div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+      <button class="btn block ghost" onclick="Nav.close('ov-modal')" style="margin-top:20px">Close</button>
+    </div>
+  `);
 }
 
 function refreshMessage(key) {

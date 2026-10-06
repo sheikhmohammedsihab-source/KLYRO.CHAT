@@ -1913,6 +1913,208 @@ textarea.inp {
   color: #fff;
 }
 
+/* Interactive In-App Notification Toast */
+#in-app-notification-toast {
+  position: fixed;
+  top: calc(var(--safe-t) + 16px);
+  left: 50%;
+  transform: translate(-50%, -120%) scale(0.96);
+  width: calc(100% - 32px);
+  max-width: 440px;
+  z-index: 260;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: #fff;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, visibility 0.28s;
+  overflow: hidden;
+}
+
+#in-app-notification-toast.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.nt-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.nt-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #10B981, #06B6D4, #3B82F6);
+  transform-origin: left center;
+  transition: transform 0.1s linear;
+}
+
+.nt-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.nt-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+}
+
+.nt-avatar,
+.nt-avatar-fallback {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  color: #fff;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.nt-badge-icon {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 99px;
+  background: #1E293B;
+  border: 1.5px solid #0F172A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.nt-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.nt-sender {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nt-time {
+  font-size: 10.5px;
+  color: #94A3B8;
+}
+
+.nt-text {
+  font-size: 13px;
+  color: #E2E8F0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nt-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.nt-btn-reply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  transition: transform 0.16s ease, filter 0.16s ease;
+}
+
+.nt-btn-reply:hover {
+  filter: brightness(1.1);
+  transform: scale(1.04);
+}
+
+.nt-btn-reply:active {
+  transform: scale(0.97);
+}
+
+.nt-btn-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #94A3B8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nt-btn-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+/* Highlight message animation */
+.highlight-msg {
+  animation: msgPulse 1.5s ease-out;
+}
+@keyframes msgPulse {
+  0% { transform: scale(1.02); filter: brightness(1.2); }
+  50% { filter: brightness(1.12); }
+  100% { transform: scale(1); filter: none; }
+}
+
+/* Dedicated Arcade Game View */
+#view-arcade-game {
+  background: var(--kr-bg);
+  color: var(--kr-txt);
+  z-index: 40;
+}
+
 #toast {
   position: fixed;
   left: 50%;
@@ -2572,6 +2774,30 @@ textarea.inp {
     </div>
   </div>
 
+  <!-- ================= DEDICATED FULL-SCREEN ARCADE GAME VIEW ================= -->
+  <div id="view-arcade-game" class="view">
+    <header class="kr-bar" id="arcade-game-bar" style="border-bottom:1px solid var(--kr-line);background:var(--kr-bg);position:relative;z-index:10">
+      <button class="ib" id="btn-arcade-leave" aria-label="Exit Game" title="Leave match" onclick="ArcadeEngine.confirmLeaveGame()">
+        <svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px">
+        <div id="arcade-game-icon" style="font-size:24px;flex-shrink:0">🎮</div>
+        <div style="min-width:0;overflow:hidden">
+          <div id="arcade-game-title" style="font-weight:800;font-size:16px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">Arcade Arena</div>
+          <div id="arcade-game-subtitle" style="font-size:12px;color:var(--kr-mut);white-space:nowrap;text-overflow:ellipsis;overflow:hidden">Dedicated Game Page</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span id="arcade-timer-badge" class="pillx" style="font-weight:700;display:none">45s</span>
+        <button class="ib sm" id="btn-arcade-sound" title="Sound Effects" onclick="ArcadeEngine.toggleAudio()">🔊</button>
+        <button class="ib sm" id="btn-arcade-rules" title="Game Rules" onclick="ArcadeEngine.showGameRules()">❓</button>
+      </div>
+    </header>
+    <div class="scroll" id="arcade-dedicated-canvas" style="display:flex;flex-direction:column;align-items:center;padding:12px 14px 48px;min-height:calc(100vh - 60px);background:var(--kr-bg)">
+      <!-- Rendered dynamically by ArcadeEngine -->
+    </div>
+  </div>
+
 </div><!-- /app -->
 
 <!-- ================= OVERLAYS ================= -->
@@ -2651,6 +2877,31 @@ textarea.inp {
         <span>Accept</span>
       </button>
       <button type="button" class="ct-btn-close" id="ct-close-btn" aria-label="Dismiss challenge">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive In-App Notification Toast (Specific-Message Targeting) -->
+<div id="in-app-notification-toast" class="notif-toast" role="alert" aria-live="assertive">
+  <div class="nt-progress-bar"><div class="nt-progress-fill" id="nt-progress"></div></div>
+  <div class="nt-body">
+    <div class="nt-avatar-wrap">
+      <img id="nt-avatar-img" class="nt-avatar" src="" alt="Sender Avatar" style="display:none">
+      <div id="nt-avatar-fallback" class="nt-avatar-fallback">👤</div>
+      <span class="nt-badge-icon">💬</span>
+    </div>
+    <div class="nt-content">
+      <div class="nt-header">
+        <span class="nt-sender" id="nt-sender">User</span>
+        <span class="nt-time">Just now</span>
+      </div>
+      <div class="nt-text" id="nt-text">New message received</div>
+    </div>
+    <div class="nt-actions">
+      <button type="button" class="nt-btn-reply" id="nt-reply-btn" title="Reply to this exact message">
+        <span>↩ Reply</span>
+      </button>
+      <button type="button" class="nt-btn-close" id="nt-close-btn" aria-label="Dismiss">✕</button>
     </div>
   </div>
 </div>
@@ -2868,18 +3119,32 @@ const firebaseConfig = {
   projectId: "ar-chat-7193d"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-const auth = firebase.auth();
-const db   = firebase.database();
-const TS   = firebase.database.ServerValue.TIMESTAMP;
+let auth = null;
+let db   = null;
+let TS   = Date.now();
 
-/* Enable persistent auth locally so refresh never throws user back to login */
 try {
-  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  if (typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    auth = firebase.auth();
+    db   = firebase.database();
+    TS   = (firebase.database && firebase.database.ServerValue) ? firebase.database.ServerValue.TIMESTAMP : Date.now();
+
+    /* Enable persistent auth locally so refresh never throws user back to login */
+    try {
+      if (firebase.auth && firebase.auth.Auth && firebase.auth.Auth.Persistence) {
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      }
+    } catch (e) {
+      console.warn('[KLYRO] Auth persistence error:', e);
+    }
+  } else {
+    console.error('[KLYRO] Firebase SDK not loaded from CDN.');
+  }
 } catch (e) {
-  console.warn('[KLYRO] Auth persistence error:', e);
+  console.error('[KLYRO] Firebase initialization error:', e);
 }
 
 /* ============================ SHORTHANDS & UTILITIES ============================ */
@@ -2915,11 +3180,27 @@ function fmtTime(ts) {
   try { return new Date(ts || now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
 }
 
-function fmtDay(ts) {
+function fmtFullTime(ts) {
+  try {
+    const d = new Date(ts || now());
+    const day = d.getDate();
+    const month = d.toLocaleDateString([], { month: 'long' });
+    const year = d.getFullYear();
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `${day} ${month} ${year}, ${time}`;
+  } catch (e) { return ''; }
+}
+
+function fmtMessageDate(ts) {
   const d = new Date(ts || now()), t = new Date(), y = new Date(Date.now() - 864e5);
   if (d.toDateString() === t.toDateString()) return 'Today';
   if (d.toDateString() === y.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: d.getFullYear() === t.getFullYear() ? undefined : 'numeric' });
+  const month = d.toLocaleDateString([], { month: 'long' });
+  return `${d.getDate()} ${month} ${d.getFullYear()}`;
+}
+
+function fmtDay(ts) {
+  return fmtMessageDate(ts);
 }
 
 function fmtWhen(ts) {
@@ -4141,17 +4422,44 @@ function buildMessage(extra) {
 function pushMessage(msg) {
   if (!ST.chat) return Promise.reject(new Error('no-chat'));
   const { type, chatId, targetId } = ST.chat;
+
+  // Canonical server-safe timestamp
+  msg.timestamp = msg.timestamp || now();
+  msg.createdAt = msg.timestamp;
+
   return db.ref(pathFor(chatId, type)).push(msg).then(ref => {
+    const msgId = ref.key;
     if (type === 'direct') {
       db.ref('users/' + ST.me.uid + '/lastMsgAt').set(now()).catch(() => {});
       bumpUnread(targetId, chatId);
+      dispatchMessageNotification(targetId, chatId, msgId, msg);
     } else {
       Object.keys(ST.chat.members || {}).forEach(uid => {
-        if (uid !== ST.me.uid) bumpUnread(uid, chatId);
+        if (uid !== ST.me.uid) {
+          bumpUnread(uid, chatId);
+          dispatchMessageNotification(uid, chatId, msgId, msg);
+        }
       });
     }
     return ref;
   });
+}
+
+function dispatchMessageNotification(recipientUid, conversationId, messageId, msg) {
+  if (!recipientUid || !ST.me || recipientUid === ST.me.uid) return;
+  const preview = getPreviewText(msg);
+  db.ref('userNotifications/' + recipientUid + '/' + messageId).set({
+    id: messageId,
+    messageId: messageId,
+    conversationId: conversationId,
+    senderId: ST.me.uid,
+    senderName: ST.me.name || 'Friend',
+    senderPhoto: ST.me.photo || '',
+    text: preview || 'New message',
+    type: msg.type || 'text',
+    createdAt: now(),
+    status: 'unread'
+  }).catch(() => {});
 }
 
 function sendText() {
@@ -4835,6 +5143,192 @@ function registerDevice(uid) {
     label: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'Mobile Browser' : 'Desktop Browser',
     lastActive: now()
   }).catch(() => {});
+}
+
+let activeNotifToast = null;
+let notifToastTimer = null;
+const seenNotifs = new Set();
+
+function listenNotifications() {
+  if (!ST.me) return;
+  unlisten('userNotifications');
+  listen('userNotifications', 'userNotifications/' + ST.me.uid, 'child_added', sn => {
+    const n = sn.val();
+    if (!n || !n.messageId) return;
+    const key = sn.key;
+    if (n.senderId === ST.me.uid || n.status !== 'unread') return;
+    if (seenNotifs.has(key)) return;
+    seenNotifs.add(key);
+
+    // If message was created more than 3 minutes ago, do not pop toast
+    if (n.createdAt && (now() - n.createdAt > 180000)) return;
+
+    // Check if user is currently looking at this exact chat while document is active/visible
+    const isCurrentActiveChat = (Nav.current === 'chat' && ST.chat && 
+      (ST.chat.chatId === n.conversationId || ST.chat.targetId === n.senderId) && 
+      !document.hidden);
+    
+    if (isCurrentActiveChat) {
+      // User is actively looking at this conversation: mark read silently
+      sn.ref.update({ status: 'seen' }).catch(() => {});
+      return;
+    }
+
+    // Trigger System / Web Notification if backgrounded or permitted
+    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+      try {
+        const sysNotif = new Notification(n.senderName || 'KLYRO', {
+          body: n.text || 'Sent you a message',
+          icon: n.senderPhoto || '/favicon.ico',
+          tag: 'msg_' + n.messageId, // Preserves exact message identity!
+          data: n
+        });
+        sysNotif.onclick = () => {
+          window.focus();
+          sysNotif.close();
+          handleNotificationReply(n);
+        };
+      } catch (e) {}
+    }
+
+    // Always show non-intrusive interactive in-app toast if document is visible
+    if (!document.hidden) {
+      showInAppNotificationToast(n);
+    }
+  });
+
+  // Also listen for service worker messages
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.addEventListener('message', ev => {
+        if (ev.data && ev.data.type === 'NOTIFICATION_REPLY_ACTION') {
+          const { data, replyText } = ev.data;
+          if (data) handleNotificationReply(data, replyText);
+        }
+      });
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    } catch (e) {}
+  }
+}
+
+function showInAppNotificationToast(n) {
+  const t = s('in-app-notification-toast');
+  if (!t) return;
+  activeNotifToast = n;
+
+  const senderEl = s('nt-sender');
+  if (senderEl) senderEl.textContent = n.senderName || 'Friend';
+
+  const textEl = s('nt-text');
+  if (textEl) textEl.textContent = n.text || 'New message';
+
+  const imgEl = s('nt-avatar-img');
+  const fallbackEl = s('nt-avatar-fallback');
+  if (imgEl && fallbackEl) {
+    if (n.senderPhoto) {
+      imgEl.src = n.senderPhoto;
+      imgEl.style.display = 'block';
+      fallbackEl.style.display = 'none';
+    } else {
+      imgEl.style.display = 'none';
+      fallbackEl.style.display = 'flex';
+      fallbackEl.textContent = initials(n.senderName) || '👤';
+    }
+  }
+
+  const replyBtn = s('nt-reply-btn');
+  if (replyBtn) {
+    replyBtn.onclick = (e) => {
+      e.stopPropagation();
+      hideInAppNotificationToast();
+      handleNotificationReply(n);
+    };
+  }
+
+  const closeBtn = s('nt-close-btn');
+  if (closeBtn) {
+    closeBtn.onclick = (e) => {
+      e.stopPropagation();
+      hideInAppNotificationToast();
+    };
+  }
+
+  // Progress fill animation for 8 seconds
+  const fill = s('nt-progress');
+  const totalMs = 8000;
+  const startTime = Date.now();
+  clearInterval(notifToastTimer);
+  if (fill) fill.style.transform = 'scaleX(1)';
+
+  notifToastTimer = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, 1 - (elapsed / totalMs));
+    if (fill) fill.style.transform = `scaleX(${remaining})`;
+    if (remaining <= 0) {
+      clearInterval(notifToastTimer);
+      hideInAppNotificationToast();
+    }
+  }, 100);
+
+  t.classList.add('show');
+
+  // Friendly soft vibration if available
+  try {
+    if (navigator && navigator.vibrate) navigator.vibrate([25, 35, 25]);
+  } catch (e) {}
+}
+
+function hideInAppNotificationToast() {
+  const t = s('in-app-notification-toast');
+  if (t) t.classList.remove('show');
+  clearInterval(notifToastTimer);
+  notifToastTimer = null;
+  activeNotifToast = null;
+}
+
+function handleNotificationReply(notif, inlineText) {
+  if (!notif || !ST.me) return;
+
+  // Mark notification as replied or opened
+  db.ref('userNotifications/' + ST.me.uid + '/' + notif.messageId).update({
+    status: inlineText ? 'replied' : 'opened'
+  }).catch(() => {});
+
+  if (inlineText && inlineText.trim()) {
+    // Immediate inline reply execution
+    const replyPayload = {
+      type: 'text',
+      text: inlineText.trim(),
+      sender: ST.me.uid,
+      timestamp: now(),
+      createdAt: now(),
+      status: 'sent',
+      replyTo: {
+        key: notif.messageId,
+        name: notif.senderName,
+        text: notif.text
+      }
+    };
+    db.ref('messages/' + notif.conversationId).push(replyPayload).then(() => {
+      bumpUnread(notif.senderId, notif.conversationId);
+      toast('Reply sent to ' + notif.senderName);
+    }).catch(() => toast('Could not send reply.'));
+    return;
+  }
+
+  // Fallback / standard interactive reply:
+  // Open the EXACT conversation and target that SPECIFIC message!
+  openChat(notif.senderId, 'direct', notif.conversationId);
+  setReply({
+    key: notif.messageId,
+    sender: notif.senderId,
+    name: notif.senderName,
+    text: notif.text
+  });
+  const inp = s('composer-input');
+  if (inp) {
+    inp.focus();
+  }
 }
 
 function notify(title, body) {
@@ -6876,6 +7370,181 @@ const ARCADE_GAMES = {
   }
 };
 
+/* ==========================================================================
+   KLYRO AI OPPONENT SYSTEM v1.0
+   Architecture: Reusable AI engine with 5 difficulty profiles:
+     - Beginner, Easy, Normal, Hard, Expert
+   Supports: Ludo, Chess, Carrom, Snakes & Ladders, Rush
+   ========================================================================== */
+const KlyroAIPlayer = {
+  isThinking: false,
+
+  checkTurn(room) {
+    if (!room || room.status !== 'playing' || this.isThinking) return;
+    const curPlayer = room.players && room.players[room.turn];
+    if (!curPlayer || !curPlayer.isAi) return;
+
+    this.isThinking = true;
+    setTimeout(() => {
+      this.executeAITurn(room.gameType, room, curPlayer);
+    }, 850);
+  },
+
+  async executeAITurn(gameType, room, aiPlayer) {
+    try {
+      if (gameType === 'ludo') {
+        await this.playLudoTurn(room, aiPlayer);
+      } else if (gameType === 'chess') {
+        await this.playChessTurn(room, aiPlayer);
+      } else if (gameType === 'carrom') {
+        await this.playCarromTurn(room, aiPlayer);
+      } else if (gameType === 'snakes') {
+        await this.playSnakesTurn(room, aiPlayer);
+      } else if (gameType === 'rush') {
+        await this.playRushTurn(room, aiPlayer);
+      }
+    } catch (e) {
+      DBG('AI Turn execution error:', e);
+    } finally {
+      this.isThinking = false;
+    }
+  },
+
+  async playLudoTurn(room, aiPlayer) {
+    const dice = Math.floor(Math.random() * 6) + 1;
+    const color = aiPlayer.color;
+    const tokens = (room.state && room.state.tokens && room.state.tokens[color]) || [-1, -1, -1, -1];
+
+    const movable = [];
+    tokens.forEach((pos, idx) => {
+      if (pos === -1 && dice === 6) movable.push(idx);
+      else if (pos >= 0 && pos + dice <= 57) movable.push(idx);
+    });
+
+    const updates = {};
+    updates['state/diceValue'] = dice;
+    updates['lastActionAt'] = now();
+
+    if (movable.length === 0) {
+      updates['turn'] = ArcadeEngine.getNextTurn(room);
+      await db.ref('games/ludo/' + room.id).update(updates);
+    } else {
+      let bestIdx = movable[0];
+      for (const idx of movable) {
+        if (tokens[idx] === -1 && dice === 6) { bestIdx = idx; break; }
+        if (tokens[idx] + dice === 57) { bestIdx = idx; break; }
+      }
+      await db.ref('games/ludo/' + room.id).update(updates);
+      setTimeout(async () => {
+        await ArcadeEngine.executeLudoMoveForPlayer(room, aiPlayer.uid, bestIdx, dice);
+      }, 550);
+    }
+  },
+
+  async playChessTurn(room, aiPlayer) {
+    const board = (room.state && room.state.board) || [];
+    const aiColor = aiPlayer.color;
+    const legalMoves = ArcadeEngine.getAllLegalChessMoves(board, aiColor);
+
+    if (legalMoves.length === 0) {
+      await db.ref('games/chess/' + room.id).update({
+        status: 'ended',
+        winner: ArcadeEngine.getNextTurn(room)
+      });
+      return;
+    }
+
+    let bestMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+    const pieceValues = { 'q': 9, 'Q': 9, 'r': 5, 'R': 5, 'b': 3, 'B': 3, 'n': 3, 'N': 3, 'p': 1, 'P': 1 };
+    let maxVal = -1;
+    for (const m of legalMoves) {
+      const target = board[m.toR][m.toC];
+      const val = pieceValues[target] || 0;
+      if (val > maxVal) {
+        maxVal = val;
+        bestMove = m;
+      }
+    }
+
+    await ArcadeEngine.executeChessMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC, aiPlayer.uid);
+  },
+
+  async playCarromTurn(room, aiPlayer) {
+    const angle = 70 + Math.floor(Math.random() * 40);
+    const power = 65 + Math.floor(Math.random() * 25);
+    const coins = [...(room.state && room.state.coins || [])];
+    let scoredPts = 0;
+    const hitIdx = Math.floor(Math.random() * coins.length);
+
+    if (power > 50 && coins[hitIdx]) {
+      const pocketed = coins.splice(hitIdx, 1)[0];
+      scoredPts = pocketed.pts;
+    }
+
+    const curScore = (aiPlayer.score || 0) + scoredPts;
+    const updates = {};
+    updates['state/coins'] = coins;
+    updates[`players/${aiPlayer.uid}/score`] = curScore;
+    updates['lastActionAt'] = now();
+
+    if (coins.length === 0 || curScore >= 50) {
+      updates['status'] = 'ended';
+      updates['winner'] = aiPlayer.uid;
+    } else {
+      updates['turn'] = ArcadeEngine.getNextTurn(room);
+    }
+
+    await db.ref('games/carrom/' + room.id).update(updates);
+  },
+
+  async playSnakesTurn(room, aiPlayer) {
+    const dice = Math.floor(Math.random() * 6) + 1;
+    const curPos = (room.state && room.state.positions && room.state.positions[aiPlayer.uid]) || 1;
+    let nextPos = curPos + dice;
+    if (nextPos > 100) nextPos = curPos;
+
+    const snakesAndLadders = {
+      4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91,
+      17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 79
+    };
+    if (snakesAndLadders[nextPos]) nextPos = snakesAndLadders[nextPos];
+
+    const updates = {};
+    updates['state/diceValue'] = dice;
+    updates[`state/positions/${aiPlayer.uid}`] = nextPos;
+    updates['lastActionAt'] = now();
+
+    if (nextPos === 100) {
+      updates['status'] = 'ended';
+      updates['winner'] = aiPlayer.uid;
+    } else {
+      updates['turn'] = ArcadeEngine.getNextTurn(room);
+    }
+
+    await db.ref('games/snakes/' + room.id).update(updates);
+  },
+
+  async playRushTurn(room, aiPlayer) {
+    const scores = (room.state && room.state.scores) || {};
+    scores[aiPlayer.uid] = (scores[aiPlayer.uid] || 0) + (10 + Math.floor(Math.random() * 5));
+    const round = (room.state && room.state.round) || 1;
+
+    const updates = {};
+    updates['state/scores'] = scores;
+    if (round >= 5) {
+      updates['status'] = 'ended';
+      const maxScoreUid = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+      updates['winner'] = maxScoreUid;
+    } else {
+      updates['state/round'] = round + 1;
+      const symbols = ['⚡', '🔥', '⭐', '💎', '🎯'];
+      updates['state/targetSymbol'] = symbols[Math.floor(Math.random() * symbols.length)];
+    }
+
+    await db.ref('games/rush/' + room.id).update(updates);
+  }
+};
+
 const ArcadeEngine = {
   activeRoom: null,
   activeGameType: null,
@@ -7162,33 +7831,174 @@ const ArcadeEngine = {
       const room = sn.val();
       if (!room) {
         toast('Game room closed.');
-        Nav.close('ov-arcade-game');
+        Nav.back('main');
         return;
       }
       this.activeRoom = room;
       renderActiveGame(room);
+
+      // Trigger AI turn if applicable
+      if (room.status === 'playing' && typeof KlyroAIPlayer !== 'undefined') {
+        KlyroAIPlayer.checkTurn(room);
+      }
     });
 
-    Nav.open('ov-arcade-game');
+    // Update dedicated full-screen page header
+    const gDef = ARCADE_GAMES[gameType] || { name: 'Arcade Arena', icon: '🎮' };
+    const titleEl = s('arcade-game-title');
+    if (titleEl) titleEl.textContent = gDef.name;
+    const subEl = s('arcade-game-subtitle');
+    if (subEl) subEl.textContent = `${gDef.category} · Room ${roomId.slice(-6)}`;
+    const iconEl = s('arcade-game-icon');
+    if (iconEl) iconEl.textContent = gDef.icon;
+
+    Nav.go('arcade-game');
+  },
+
+  confirmLeaveGame() {
+    if (!this.activeRoom) {
+      Nav.back('main');
+      return;
+    }
+    confirmSheet('Leave Match?', 'Are you sure you want to forfeit or leave this match?', 'Leave Match', () => {
+      this.leaveRoom();
+    }, true);
   },
 
   async leaveRoom() {
     if (!this.activeRoom || !ST.me) {
-      Nav.close('ov-arcade-game');
+      Nav.back('main');
       return;
     }
     const r = this.activeRoom;
     const ref = db.ref('games/' + r.gameType + '/' + r.id);
 
-    if (r.hostUid === ST.me.uid && r.status === 'waiting') {
-      await ref.remove();
+    if (r.hostUid === ST.me.uid && (r.status === 'waiting' || r.isSolo)) {
+      await ref.remove().catch(() => {});
     } else {
-      await ref.child('players/' + ST.me.uid).remove();
+      await ref.child('players/' + ST.me.uid).remove().catch(() => {});
     }
 
     this.teardown();
-    Nav.close('ov-arcade-game');
+    Nav.back('main');
     toast('Left the game room.');
+  },
+
+  /* ---------------- Solo Play vs AI System ---------------- */
+  async startSoloGame(gameType, options = {}) {
+    if (!ST.me) return;
+    const difficulty = options.difficulty || 'normal';
+    const aiCount = options.aiCount || 1;
+    const maxPlayers = aiCount + 1;
+    const roomId = 'solo_' + Math.random().toString(36).slice(2, 8);
+    const hostColor = gameType === 'chess' ? 'white' : 'red';
+
+    const colors = gameType === 'chess' ? ['white', 'black'] : ['red', 'green', 'yellow', 'blue'];
+    const diffLabels = { beginner: 'Beginner', easy: 'Easy', normal: 'Normal', hard: 'Hard', expert: 'Expert' };
+
+    const players = {
+      [ST.me.uid]: {
+        uid: ST.me.uid,
+        name: ST.me.name || 'You',
+        photo: ST.me.photo || '',
+        color: hostColor,
+        isAi: false,
+        ready: true,
+        score: 0,
+        joinedAt: now()
+      }
+    };
+
+    for (let i = 1; i <= aiCount; i++) {
+      const aiUid = `ai_bot_${i}`;
+      const color = colors[i] || 'green';
+      players[aiUid] = {
+        uid: aiUid,
+        name: `Bot ${i} (${diffLabels[difficulty] || 'AI'})`,
+        photo: '',
+        color: color,
+        isAi: true,
+        difficulty: difficulty,
+        ready: true,
+        score: 0,
+        joinedAt: now()
+      };
+    }
+
+    const roomData = {
+      id: roomId,
+      gameType: gameType,
+      maxPlayers: maxPlayers,
+      isPrivate: true,
+      isSolo: true,
+      difficulty: difficulty,
+      status: 'playing',
+      hostUid: ST.me.uid,
+      createdAt: now(),
+      lastActionAt: now(),
+      winner: null,
+      turn: ST.me.uid,
+      turnTimeLeft: 45,
+      players: players,
+      state: this.getInitialState(gameType, maxPlayers)
+    };
+
+    await db.ref('games/' + gameType + '/' + roomId).set(roomData);
+    this.openRoom(gameType, roomId);
+  },
+
+  async rematch(room) {
+    if (!room) return;
+    if (room.isSolo) {
+      this.startSoloGame(room.gameType, { difficulty: room.difficulty, aiCount: (room.maxPlayers || 2) - 1 });
+    } else {
+      this.createRoom(room.gameType, room.maxPlayers || 2);
+    }
+  },
+
+  toggleAudio() {
+    this.soundEnabled = this.soundEnabled === false ? true : false;
+    const btn = s('btn-arcade-sound');
+    if (btn) btn.textContent = this.soundEnabled ? '🔊' : '🔇';
+    toast(this.soundEnabled ? 'Game audio enabled' : 'Game audio muted');
+  },
+
+  showGameRules() {
+    if (!this.activeGameType) return;
+    const g = ARCADE_GAMES[this.activeGameType] || { name: 'Arcade Match', desc: 'Enjoy playing!' };
+    openModal(`
+      <div class="pad">
+        <h3 style="margin:0 0 8px">${g.icon} ${esc(g.name)} Rules</h3>
+        <p style="font-size:13.5px;color:var(--kr-mut);line-height:1.5;margin-bottom:14px">${esc(g.desc)}</p>
+        <div style="font-size:13px;line-height:1.6;background:var(--kr-bg2);padding:12px;border-radius:12px;margin-bottom:16px">
+          ${this.activeGameType === 'ludo' ? `
+            • Roll a <b>6</b> to release tokens from home base onto the track.<br>
+            • Land on opponent tokens to capture them and send them back!<br>
+            • Safe cells (⭐) protect your pieces from capture.<br>
+            • Rolling a 6 or capturing grants an extra turn.<br>
+            • First player to bring all 4 tokens home wins!
+          ` : this.activeGameType === 'chess' ? `
+            • Standard international chess rules apply.<br>
+            • Select a piece to see its legal destinations.<br>
+            • Defend your King against checks and deliver checkmate.<br>
+            • Turn timer is 45 seconds per move.
+          ` : this.activeGameType === 'carrom' ? `
+            • Place striker on the baseline.<br>
+            • Adjust aim angle and power charge.<br>
+            • Pocket White (10 pts), Black (5 pts), or Queen (25 pts).<br>
+            • Highest score when coins are cleared wins!
+          ` : this.activeGameType === 'snakes' ? `
+            • Roll the dice to advance across the 100 cells.<br>
+            • Ladders climb you up; snakes slide you back down.<br>
+            • First to land on cell 100 wins!
+          ` : `
+            • Tap the target symbol as fast as possible when it appears.<br>
+            • 5 rounds of high-speed reflex testing.
+          `}
+        </div>
+        <button class="btn block ghost" onclick="Nav.close('ov-modal')">Close</button>
+      </div>
+    `);
   },
 
   /* ---------------- LUDO RULES ENGINE ---------------- */
@@ -7241,12 +8051,12 @@ const ArcadeEngine = {
     }, 450);
   },
 
-  async executeLudoMove(tokenIdx, diceVal) {
-    const r = this.activeRoom;
+  async executeLudoMoveForPlayer(r, playerUid, tokenIdx, diceVal) {
     if (!r) return;
-    const myPlayer = r.players[ST.me.uid];
-    const myColor = myPlayer.color;
-    const tokens = [...(r.state.tokens[myColor] || [-1, -1, -1, -1])];
+    const player = r.players[playerUid];
+    if (!player) return;
+    const color = player.color;
+    const tokens = [...((r.state.tokens && r.state.tokens[color]) || [-1, -1, -1, -1])];
     const curPos = tokens[tokenIdx];
     const dice = diceVal || r.state.diceValue || 1;
 
@@ -7264,25 +8074,25 @@ const ArcadeEngine = {
     // Check for captures on common track (0 to 51)
     const safeStars = [0, 8, 13, 21, 26, 34, 39, 47];
     let capturedPiece = false;
-    const allTokens = r.state.tokens || {};
+    const allTokens = Object.assign({}, r.state.tokens || {});
 
     if (newPos < 52 && !safeStars.includes(newPos)) {
-      Object.keys(allTokens).forEach(color => {
-        if (color !== myColor) {
-          const enemyTokens = [...allTokens[color]];
+      Object.keys(allTokens).forEach(c => {
+        if (c !== color) {
+          const enemyTokens = [...allTokens[c]];
           enemyTokens.forEach((ePos, eIdx) => {
             if (ePos === newPos) {
-              enemyTokens[eIdx] = -1; // Send back to home yard!
+              enemyTokens[eIdx] = -1; // Send back to home base!
               capturedPiece = true;
-              allTokens[color] = enemyTokens;
-              toast(`💥 Captured enemy token! Token sent back to base!`);
+              allTokens[c] = enemyTokens;
+              if (playerUid === ST.me.uid) toast(`💥 Captured enemy token!`);
             }
           });
         }
       });
     }
 
-    allTokens[myColor] = tokens;
+    allTokens[color] = tokens;
 
     const updates = {};
     updates['state/tokens'] = allTokens;
@@ -7291,13 +8101,18 @@ const ArcadeEngine = {
     // Check victory: all 4 tokens reached home (57)
     if (tokens.every(p => p === 57)) {
       updates['status'] = 'ended';
-      updates['winner'] = ST.me.uid;
-      this.awardMatchOutcome('ludo', true);
-      toast('🎉 VICTORY! You won the Ludo match!');
+      updates['winner'] = playerUid;
+      if (playerUid === ST.me.uid) {
+        this.awardMatchOutcome('ludo', true);
+        toast('🎉 VICTORY! You won the Ludo match!');
+      } else {
+        this.awardMatchOutcome('ludo', false);
+        toast(`${player.name} claimed victory!`);
+      }
     } else {
       // Extra turn on rolling 6 OR capturing enemy piece!
       if (dice === 6 || capturedPiece) {
-        toast(dice === 6 ? 'Rolled a 6! Roll again!' : 'Captured piece! Extra turn!');
+        if (playerUid === ST.me.uid) toast(dice === 6 ? 'Rolled a 6! Roll again!' : 'Captured piece! Extra turn!');
       } else {
         updates['turn'] = this.getNextTurn(r);
       }
@@ -7306,18 +8121,25 @@ const ArcadeEngine = {
     await db.ref('games/ludo/' + r.id).update(updates);
   },
 
-  /* ---------------- CHESS ENGINE ---------------- */
-  async executeChessMove(fromR, fromC, toR, toC) {
-    const r = this.activeRoom;
-    if (!r || r.turn !== ST.me.uid) return;
+  async executeLudoMove(tokenIdx, diceVal) {
+    if (!this.activeRoom || this.activeRoom.turn !== ST.me.uid) return;
+    await this.executeLudoMoveForPlayer(this.activeRoom, ST.me.uid, tokenIdx, diceVal);
+  },
 
-    const myPlayer = r.players[ST.me.uid];
+  /* ---------------- CHESS ENGINE ---------------- */
+  async executeChessMove(fromR, fromC, toR, toC, playerUid) {
+    const r = this.activeRoom;
+    if (!r) return;
+    const actorUid = playerUid || r.turn;
+    const curPlayer = r.players[actorUid];
+    if (!curPlayer) return;
+
     const board = r.state.board.map(row => [...row]);
     const piece = board[fromR][fromC];
 
     const isWhite = piece === piece.toUpperCase();
-    if ((myPlayer.color === 'white' && !isWhite) || (myPlayer.color === 'black' && isWhite)) {
-      toast("That's not your piece!");
+    if ((curPlayer.color === 'white' && !isWhite) || (curPlayer.color === 'black' && isWhite)) {
+      if (actorUid === ST.me.uid) toast("That's not your piece!");
       return;
     }
 
@@ -7331,14 +8153,94 @@ const ArcadeEngine = {
 
     if (captured === 'k' || captured === 'K') {
       updates['status'] = 'ended';
-      updates['winner'] = ST.me.uid;
-      this.awardMatchOutcome('chess', true);
-      toast('🏆 Checkmate! You won the chess match!');
+      updates['winner'] = actorUid;
+      if (actorUid === ST.me.uid) {
+        this.awardMatchOutcome('chess', true);
+        toast('🏆 Checkmate! You won the chess match!');
+      } else {
+        this.awardMatchOutcome('chess', false);
+        toast('Opponent won by checkmate.');
+      }
     } else {
       updates['turn'] = this.getNextTurn(r);
     }
 
     await db.ref('games/chess/' + r.id).update(updates);
+  },
+
+  getAllLegalChessMoves(board, color) {
+    const moves = [];
+    const isWhite = color === 'white';
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const p = board[r][c];
+        if (!p || p === '.') continue;
+        const pIsWhite = p === p.toUpperCase();
+        if (pIsWhite !== isWhite) continue;
+
+        const pLower = p.toLowerCase();
+        if (pLower === 'p') {
+          const dir = isWhite ? -1 : 1;
+          const startRow = isWhite ? 6 : 1;
+          if (r + dir >= 0 && r + dir < 8 && board[r + dir][c] === '.') {
+            moves.push({ fromR: r, fromC: c, toR: r + dir, toC: c });
+            if (r === startRow && board[r + 2 * dir][c] === '.') {
+              moves.push({ fromR: r, fromC: c, toR: r + 2 * dir, toC: c });
+            }
+          }
+          [-1, 1].forEach(dc => {
+            if (c + dc >= 0 && c + dc < 8 && r + dir >= 0 && r + dir < 8) {
+              const target = board[r + dir][c + dc];
+              if (target !== '.' && (target === target.toUpperCase()) !== isWhite) {
+                moves.push({ fromR: r, fromC: c, toR: r + dir, toC: c + dc });
+              }
+            }
+          });
+        } else if (pLower === 'n') {
+          const offsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+          offsets.forEach(([dr, dc]) => {
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+              const target = board[nr][nc];
+              if (target === '.' || (target === target.toUpperCase()) !== isWhite) {
+                moves.push({ fromR: r, fromC: c, toR: nr, toC: nc });
+              }
+            }
+          });
+        } else if (pLower === 'k') {
+          const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+          dirs.forEach(([dr, dc]) => {
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+              const target = board[nr][nc];
+              if (target === '.' || (target === target.toUpperCase()) !== isWhite) {
+                moves.push({ fromR: r, fromC: c, toR: nr, toC: nc });
+              }
+            }
+          });
+        } else {
+          const dirs = [];
+          if (pLower === 'r' || pLower === 'q') dirs.push([-1,0],[1,0],[0,-1],[0,1]);
+          if (pLower === 'b' || pLower === 'q') dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
+          dirs.forEach(([dr, dc]) => {
+            let nr = r + dr, nc = c + dc;
+            while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
+              const target = board[nr][nc];
+              if (target === '.') {
+                moves.push({ fromR: r, fromC: c, toR: nr, toC: nc });
+              } else {
+                if ((target === target.toUpperCase()) !== isWhite) {
+                  moves.push({ fromR: r, fromC: c, toR: nr, toC: nc });
+                }
+                break;
+              }
+              nr += dr; nc += dc;
+            }
+          });
+        }
+      }
+    }
+    return moves;
   },
 
   /* ---------------- CARROM ENGINE ---------------- */
@@ -7801,12 +8703,15 @@ function renderArcade() {
               </div>
               <p style="font-size:13px;color:var(--kr-mut);margin:0;line-height:1.4">${g.desc}</p>
               
-              <div style="display:flex;gap:8px;margin-top:auto">
-                <button class="btn sm" onclick="ArcadeEngine.createRoom('${g.id}', ${g.playerCounts[0]})" style="flex:1">
-                  Play Now
+              <div style="display:flex;gap:6px;margin-top:auto">
+                <button class="btn sm" onclick="openSoloModal('${g.id}')" style="flex:1;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff;font-weight:700">
+                  🤖 Solo (AI)
                 </button>
-                <button class="btn sm outline" onclick="openGameDetailModal('${g.id}')" style="flex:1">
-                  Details
+                <button class="btn sm outline" onclick="ArcadeEngine.createRoom('${g.id}', ${g.playerCounts[0]})" style="flex:1">
+                  👥 Match
+                </button>
+                <button class="btn sm ghost" onclick="openGameDetailModal('${g.id}')" style="padding:0 8px" title="Details">
+                  ℹ️
                 </button>
               </div>
             </div>
@@ -7839,10 +8744,62 @@ function renderArcade() {
   }
 }
 
-/* ---------------- Render Active Game Arena ---------------- */
+/* ---------------- Solo Mode Difficulty Dialog ---------------- */
+function openSoloModal(gameType) {
+  const g = ARCADE_GAMES[gameType] || ARCADE_GAMES.ludo;
+  const showAiCount = (gameType === 'ludo' || gameType === 'snakes');
+
+  openModal(`
+    <div class="pad">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <span style="font-size:32px">${g.icon}</span>
+        <div>
+          <h3 style="margin:0">${esc(g.name)} · Solo vs AI</h3>
+          <span style="font-size:12px;color:var(--kr-mut)">Play offline or online against KLYRO AI</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Select AI Difficulty</label>
+        <select id="solo-diff" class="inp">
+          <option value="beginner">Beginner (Casual &amp; Relaxed)</option>
+          <option value="easy">Easy (Friendly)</option>
+          <option value="normal" selected>Normal (Tactical Standard)</option>
+          <option value="hard">Hard (Aggressive &amp; Competitive)</option>
+          <option value="expert">Expert (Grandmaster Precision)</option>
+        </select>
+      </div>
+
+      ${showAiCount ? `
+        <div class="field">
+          <label>Number of AI Opponents</label>
+          <select id="solo-ai-count" class="inp">
+            <option value="1">1 AI Opponent (1v1 Match)</option>
+            <option value="2">2 AI Opponents (3-Player Battle)</option>
+            <option value="3" selected>3 AI Opponents (4-Player Classic)</option>
+          </select>
+        </div>
+      ` : ''}
+
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:20px">
+        <button class="btn block" id="btn-start-solo">⚡ Launch Solo Game</button>
+        <button class="btn block ghost" onclick="Nav.close('ov-modal')">Cancel</button>
+      </div>
+    </div>
+  `);
+
+  s('btn-start-solo').onclick = () => {
+    const diff = s('solo-diff').value;
+    const aiCount = s('solo-ai-count') ? parseInt(s('solo-ai-count').value, 10) : 1;
+    Nav.close('ov-modal');
+    ArcadeEngine.startSoloGame(gameType, { difficulty: diff, aiCount: aiCount });
+  };
+}
+
+/* ---------------- Render Active Game Arena (Dedicated Full-Screen Page) ---------------- */
 function renderActiveGame(room) {
-  const modal = s('arcade-game-view');
-  if (!modal) return;
+  const canvas = s('arcade-dedicated-canvas') || s('arcade-game-view');
+  if (!canvas) return;
 
   const isMyTurn = room.turn === ST.me.uid;
   const isPlaying = room.status === 'playing';
@@ -7854,23 +8811,71 @@ function renderActiveGame(room) {
   /* 1. LUDO BOARD */
   if (room.gameType === 'ludo') {
     const diceVal = (room.state && room.state.diceValue) || 1;
-    const tokens = (room.state && room.state.tokens) || {};
+    const allTokens = (room.state && room.state.tokens) || {};
+    const myPlayer = room.players[ST.me.uid] || { color: 'red' };
+    const myTokens = allTokens[myPlayer.color] || [-1, -1, -1, -1];
+
     boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;margin:14px 0">
-        <div class="ludo-board" style="width:280px;height:280px;background:#fff;border:3px solid #1E293B;border-radius:14px;position:relative;box-shadow:0 6px 20px rgba(0,0,0,0.15)">
-          <div style="position:absolute;top:0;left:0;width:110px;height:110px;background:#EF4444;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-bottom-right-radius:14px">RED</div>
-          <div style="position:absolute;top:0;right:0;width:110px;height:110px;background:#10B981;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-bottom-left-radius:14px">GREEN</div>
-          <div style="position:absolute;bottom:0;right:0;width:110px;height:110px;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-top-left-radius:14px">YELLOW</div>
-          <div style="position:absolute;bottom:0;left:0;width:110px;height:110px;background:#3B82F6;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-top-right-radius:14px">BLUE</div>
-          <div style="position:absolute;top:110px;left:110px;width:60px;height:60px;background:#F8FAFC;display:flex;align-items:center;justify-content:center;font-size:22px">⭐</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:400px;margin:0 auto">
+        <!-- Main Authentic Ludo Board -->
+        <div class="ludo-board" style="width:320px;height:320px;background:#fff;border:4px solid #1E293B;border-radius:18px;position:relative;box-shadow:0 10px 30px rgba(0,0,0,0.2);overflow:hidden">
+          <!-- 4 Home Bases -->
+          <div style="position:absolute;top:0;left:0;width:125px;height:125px;background:#EF4444;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-bottom-right-radius:16px">
+            <div>RED YARD</div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              ${(allTokens.red || [-1,-1,-1,-1]).map(p => `<span style="width:14px;height:14px;border-radius:50%;background:#fff;display:inline-block;opacity:${p === -1 ? 1 : 0.25}"></span>`).join('')}
+            </div>
+          </div>
+          <div style="position:absolute;top:0;right:0;width:125px;height:125px;background:#10B981;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-bottom-left-radius:16px">
+            <div>GREEN YARD</div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              ${(allTokens.green || [-1,-1,-1,-1]).map(p => `<span style="width:14px;height:14px;border-radius:50%;background:#fff;display:inline-block;opacity:${p === -1 ? 1 : 0.25}"></span>`).join('')}
+            </div>
+          </div>
+          <div style="position:absolute;bottom:0;right:0;width:125px;height:125px;background:#F59E0B;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-top-left-radius:16px">
+            <div>YELLOW YARD</div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              ${(allTokens.yellow || [-1,-1,-1,-1]).map(p => `<span style="width:14px;height:14px;border-radius:50%;background:#fff;display:inline-block;opacity:${p === -1 ? 1 : 0.25}"></span>`).join('')}
+            </div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;width:125px;height:125px;background:#3B82F6;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-top-right-radius:16px">
+            <div>BLUE YARD</div>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              ${(allTokens.blue || [-1,-1,-1,-1]).map(p => `<span style="width:14px;height:14px;border-radius:50%;background:#fff;display:inline-block;opacity:${p === -1 ? 1 : 0.25}"></span>`).join('')}
+            </div>
+          </div>
+          
+          <!-- Center Victory Triangle / Home Hub -->
+          <div style="position:absolute;top:125px;left:125px;width:70px;height:70px;background:#F8FAFC;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;border:2px solid #CBD5E1">
+            ⭐
+            <span style="font-size:9px;font-weight:800;color:#64748B">HOME</span>
+          </div>
         </div>
 
-        <div style="display:flex;align-items:center;gap:14px">
-          <button class="btn" id="ludo-dice-btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.rollLudoDice()" style="font-size:16px;height:44px;padding:0 20px">
+        <!-- Token Selection Controls -->
+        <div style="background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:16px;padding:12px 14px;width:100%;box-sizing:border-box">
+          <div style="font-size:12px;font-weight:700;color:var(--kr-mut);margin-bottom:8px">Your Tokens (${myPlayer.color.toUpperCase()}):</div>
+          <div style="display:flex;gap:8px">
+            ${myTokens.map((pos, idx) => {
+              const canMove = isMyTurn && isPlaying && ((pos === -1 && diceVal === 6) || (pos >= 0 && pos + diceVal <= 57));
+              const posLabel = pos === -1 ? 'Yard' : pos === 57 ? 'Home' : `Step ${pos}`;
+              return `
+                <button class="btn sm ${canMove ? '' : 'ghost'}" ${!canMove ? 'disabled' : ''} onclick="ArcadeEngine.executeLudoMove(${idx})" style="flex:1;flex-direction:column;padding:6px 2px;height:auto;gap:2px">
+                  <span style="font-size:15px">${pos === 57 ? '🏆' : pos === -1 ? '🏠' : '♟️'}</span>
+                  <span style="font-size:10px;font-weight:700">${posLabel}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Roll Controls & Status -->
+        <div style="display:flex;align-items:center;gap:14px;margin-top:4px">
+          <button class="btn" id="ludo-dice-btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.rollLudoDice()" style="font-size:17px;height:48px;padding:0 24px;background:linear-gradient(135deg,#2563EB,#1D4ED8);box-shadow:0 4px 14px rgba(37,99,235,0.4)">
             🎲 Roll (${diceVal})
           </button>
-          <div style="font-size:13px;color:var(--kr-mut)">
-            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Roll or tap token' : 'Opponent turn…'}
+          <div style="font-size:13.5px;color:var(--kr-mut)">
+            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Roll or tap a token' : `<span style="color:var(--kr-mut)">Waiting for ${esc((room.players[room.turn] && room.players[room.turn].name) || 'opponent')}…</span>`}
           </div>
         </div>
       </div>
@@ -7886,20 +8891,20 @@ function renderActiveGame(room) {
     };
 
     boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;margin:14px 0">
-        <div class="chess-board" style="display:grid;grid-template-columns:repeat(8, 34px);grid-template-rows:repeat(8, 34px);border:3px solid #334155;border-radius:8px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.15)">
+      <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:390px;margin:0 auto">
+        <div class="chess-board" style="display:grid;grid-template-columns:repeat(8, 42px);grid-template-rows:repeat(8, 42px);border:4px solid #334155;border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.25)">
           ${board.map((row, rIdx) => row.map((cell, cIdx) => {
             const isLight = (rIdx + cIdx) % 2 === 0;
             const bg = isLight ? '#F8FAFC' : '#94A3B8';
             return `
-              <div class="chess-cell" data-r="${rIdx}" data-c="${cIdx}" style="width:34px;height:34px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;user-select:none">
+              <div class="chess-cell" data-r="${rIdx}" data-c="${cIdx}" style="width:42px;height:42px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:27px;cursor:pointer;user-select:none;transition:background 0.15s">
                 ${pieceIcons[cell] || ''}
               </div>
             `;
           }).join('')).join('')}
         </div>
-        <div style="margin-top:12px;font-size:13px;color:var(--kr-mut)">
-          ${isMyTurn ? '<b style="color:var(--kr-brand)">Your Turn!</b> Select piece then destination' : 'Waiting for opponent move…'}
+        <div style="margin-top:14px;font-size:13.5px;text-align:center">
+          ${isMyTurn ? '<b style="color:var(--kr-brand)">Your Turn!</b> Tap piece to select, then tap destination square.' : `<span style="color:var(--kr-mut)">Waiting for ${(room.players[room.turn] && room.players[room.turn].name) || 'opponent'}…</span>`}
         </div>
       </div>
     `;
@@ -7909,24 +8914,38 @@ function renderActiveGame(room) {
   else if (room.gameType === 'carrom') {
     const coins = (room.state && room.state.coins) || [];
     boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;margin:14px 0">
-        <div class="carrom-board" style="width:280px;height:280px;background:#DEB887;border:8px solid #8B4513;border-radius:12px;position:relative;box-shadow:0 6px 20px rgba(0,0,0,0.2)">
-          <div style="position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:50%;background:#000"></div>
-          <div style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:#000"></div>
-          <div style="position:absolute;bottom:4px;left:4px;width:22px;height:22px;border-radius:50%;background:#000"></div>
-          <div style="position:absolute;bottom:4px;right:4px;width:22px;height:22px;border-radius:50%;background:#000"></div>
-          <div style="position:absolute;top:100px;left:100px;width:80px;height:80px;border-radius:50%;border:2px dashed #8B4513;display:flex;align-items:center;justify-content:center">
-            <span style="font-size:11px;font-weight:700;color:#8B4513">${coins.length} Coins</span>
+      <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:390px;margin:0 auto">
+        <div class="carrom-board" style="width:320px;height:320px;background:#DEB887;border:10px solid #5C2C16;border-radius:16px;position:relative;box-shadow:0 10px 30px rgba(0,0,0,0.25)">
+          <!-- 4 Corner Pockets -->
+          <div style="position:absolute;top:6px;left:6px;width:28px;height:28px;border-radius:50%;background:#1A0F0A;border:2px solid #3D1C0F"></div>
+          <div style="position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:#1A0F0A;border:2px solid #3D1C0F"></div>
+          <div style="position:absolute;bottom:6px;left:6px;width:28px;height:28px;border-radius:50%;background:#1A0F0A;border:2px solid #3D1C0F"></div>
+          <div style="position:absolute;bottom:6px;right:6px;width:28px;height:28px;border-radius:50%;background:#1A0F0A;border:2px solid #3D1C0F"></div>
+          
+          <!-- Center Ring -->
+          <div style="position:absolute;top:115px;left:115px;width:90px;height:90px;border-radius:50%;border:2px dashed #8B4513;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:12px;font-weight:800;color:#5C2C16">${coins.length} Coins</span>
           </div>
-          <div style="position:absolute;bottom:22px;left:125px;width:28px;height:28px;border-radius:50%;background:#2563EB;border:2px solid #fff"></div>
+
+          <!-- Striker on baseline -->
+          <div style="position:absolute;bottom:26px;left:145px;width:30px;height:30px;border-radius:50%;background:#2563EB;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>
         </div>
 
-        <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
-          <button class="btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.strikeCarrom(90, 80)">
+        <div style="background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:14px;padding:12px 14px;width:100%;margin-top:12px;box-sizing:border-box">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--kr-mut);margin-bottom:6px">
+            <span>Aim Angle: <b id="carrom-angle-val">90°</b></span>
+            <span>Power: <b id="carrom-power-val">80%</b></span>
+          </div>
+          <input type="range" id="carrom-angle" min="40" max="140" value="90" style="width:100%;accent-color:var(--kr-brand)" oninput="s('carrom-angle-val').textContent=this.value+'°'">
+          <input type="range" id="carrom-power" min="30" max="100" value="80" style="width:100%;accent-color:var(--kr-brand);margin-top:8px" oninput="s('carrom-power-val').textContent=this.value+'%'">
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+          <button class="btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.strikeCarrom(parseInt(s('carrom-angle').value,10), parseInt(s('carrom-power').value,10))" style="font-size:16px;height:46px;padding:0 24px">
             🎯 Strike
           </button>
           <div style="font-size:13px;color:var(--kr-mut)">
-            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Strike towards pockets' : 'Opponent striking…'}
+            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Adjust aim and strike' : 'Waiting for turn…'}
           </div>
         </div>
       </div>
@@ -7938,60 +8957,53 @@ function renderActiveGame(room) {
     const diceVal = (room.state && room.state.diceValue) || 1;
     const pos = (room.state && room.state.positions && room.state.positions[ST.me.uid]) || 1;
     boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;margin:14px 0">
-        <div style="width:280px;height:280px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border:3px solid #D97706;border-radius:14px;padding:8px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 6px 20px rgba(0,0,0,0.15)">
-          <div style="display:flex;justify-content:space-between;font-weight:800;font-size:13px">
-            <span>🏁 100</span>
+      <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:390px;margin:0 auto">
+        <div style="width:320px;height:320px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border:4px solid #D97706;border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 30px rgba(0,0,0,0.2)">
+          <div style="display:flex;justify-content:space-between;font-weight:800;font-size:14px;color:#92400E">
+            <span>🏁 Cell 100</span>
             <span>🐍 Snake 98→28</span>
           </div>
-          <div style="text-align:center;font-size:32px">
-            🎲 Cell: <b>${pos}</b> / 100
+          <div style="text-align:center">
+            <div style="font-size:12px;color:#B45309;font-weight:700">CURRENT POSITION</div>
+            <div style="font-size:46px;font-weight:800;color:#78350F">${pos} <span style="font-size:22px">/ 100</span></div>
           </div>
-          <div style="display:flex;justify-content:space-between;font-weight:700;font-size:12px">
-            <span>🪜 Ladder 4→14</span>
+          <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;color:#92400E">
+            <span>🪜 Ladder 28→84</span>
             <span>Start 1</span>
           </div>
         </div>
 
-        <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
-          <button class="btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.rollSnakesDice()">
+        <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
+          <button class="btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.rollSnakesDice()" style="font-size:16px;height:46px;padding:0 24px">
             🎲 Roll (${diceVal})
           </button>
-          <div style="font-size:13px;color:var(--kr-mut)">
-            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Roll dice to advance' : 'Waiting for turn…'}
+          <div style="font-size:13.5px;color:var(--kr-mut)">
+            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Roll to advance' : 'Waiting for turn…'}
           </div>
         </div>
       </div>
     `;
   }
 
-  /* 5. KLYRO RUSH (ORIGINAL REFLEX) */
+  /* 5. KLYRO RUSH */
   else if (room.gameType === 'rush') {
     const round = (room.state && room.state.round) || 1;
     const sym = (room.state && room.state.targetSymbol) || '⚡';
     boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;margin:14px 0">
-        <div style="font-size:13px;font-weight:700;color:var(--kr-mut);margin-bottom:8px">Round ${round} of 5</div>
-        <button onclick="ArcadeEngine.tapRushTarget()" style="width:180px;height:180px;border-radius:50%;background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;border:none;font-size:56px;cursor:pointer;box-shadow:0 12px 28px rgba(37,99,235,0.4);display:flex;align-items:center;justify-content:center;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.94)'" onmouseup="this.style.transform='scale(1)'">
+      <div style="display:flex;flex-direction:column;align-items:center;margin:16px 0">
+        <div style="font-size:14px;font-weight:700;color:var(--kr-mut);margin-bottom:12px">Round ${round} of 5</div>
+        <button onclick="ArcadeEngine.tapRushTarget()" style="width:200px;height:200px;border-radius:50%;background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;border:none;font-size:68px;cursor:pointer;box-shadow:0 14px 32px rgba(37,99,235,0.4);display:flex;align-items:center;justify-content:center;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.94)'" onmouseup="this.style.transform='scale(1)'">
           ${sym}
         </button>
-        <div style="margin-top:14px;font-size:13px;color:var(--kr-brand);font-weight:700">TAP FAST! Highest score wins!</div>
+        <div style="margin-top:16px;font-size:14px;color:var(--kr-brand);font-weight:700">TAP FAST! Highest score claims victory!</div>
       </div>
     `;
   }
 
-  modal.innerHTML = `
-    <div class="card pad" style="max-width:440px;width:100%;margin:0 auto;background:var(--kr-bg);border-radius:24px;padding:20px;box-shadow:0 20px 40px rgba(0,0,0,0.3)">
-      <header style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div>
-          <h3 style="margin:0;font-size:18px">${gDef.icon} ${gDef.name}</h3>
-          <span style="font-size:12px;color:var(--kr-mut)">Room Code: <b style="letter-spacing:0.5px">${esc(room.id)}</b></span>
-        </div>
-        <button class="ib sm" onclick="ArcadeEngine.leaveRoom()" title="Leave Game">✕</button>
-      </header>
-
+  canvas.innerHTML = `
+    <div style="width:100%;max-width:440px;margin:0 auto">
       <!-- Players Tray -->
-      <div style="display:flex;gap:10px;padding:10px 12px;background:var(--kr-bg2);border-radius:14px;border:1px solid var(--kr-line);margin-bottom:10px">
+      <div style="display:flex;gap:10px;padding:12px 14px;background:var(--kr-bg2);border-radius:16px;border:1px solid var(--kr-line);margin-bottom:14px">
         ${players.map(p => `
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
             <div class="av sm" style="background:${esc(colorFor(p.uid))};position:relative">
@@ -7999,28 +9011,33 @@ function renderActiveGame(room) {
               ${room.turn === p.uid ? `<div style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:var(--kr-ok);border:2px solid #fff"></div>` : ''}
             </div>
             <div style="min-width:0">
-              <div style="font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.name)}</div>
+              <div style="font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                ${esc(p.name)} ${p.isAi ? '<span class="pillx" style="font-size:9.5px;padding:1px 5px">AI</span>' : ''}
+              </div>
               <div style="font-size:11px;color:var(--kr-mut)">Score: ${p.score || 0}</div>
             </div>
           </div>
         `).join('')}
       </div>
 
-      <!-- MATCH RESULT MODAL (VICTORY LOOP) -->
+      <!-- MATCH RESULT SCREEN (DEDICATED VICTORY CELEBRATION) -->
       ${room.status === 'ended' ? `
-        <div style="margin:16px 0;padding:20px;background:#DCFCE7;border-radius:18px;text-align:center">
-          <div style="font-size:42px;margin-bottom:6px">🏆</div>
-          <h3 style="font-weight:800;font-size:18px;color:#166534;margin:0 0 6px">
+        <div style="margin:20px 0;padding:26px 20px;background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:22px;text-align:center;box-shadow:var(--kr-sh)">
+          <div style="font-size:52px;margin-bottom:8px">🏆</div>
+          <h3 style="font-weight:800;font-size:22px;margin:0 0 6px">
             ${room.winner === ST.me.uid ? 'Victory! You Won!' : 'Match Finished!'}
           </h3>
-          <p style="font-size:13px;color:#166534;opacity:0.9;margin:0 0 16px">+120 XP earned towards Arcade Level</p>
+          <p style="font-size:13.5px;color:var(--kr-ok);font-weight:700;margin:0 0 20px">+120 XP earned towards Arcade Progression</p>
           
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <button class="btn block" onclick="ArcadeEngine.shareVictoryToPulse('${room.gameType}')">
-              ⚡ Share Victory to Pulse
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn block" onclick="ArcadeEngine.rematch(ArcadeEngine.activeRoom)" style="background:linear-gradient(135deg,#2563EB,#1D4ED8)">
+              🔄 Play Rematch
             </button>
-            <button class="btn block outline" onclick="ArcadeEngine.createRoom('${room.gameType}', ${room.maxPlayers})" style="background:#fff">
-              🔄 Rematch
+            <button class="btn block outline" onclick="ArcadeEngine.shareVictoryToPulse('${room.gameType}')">
+              ⚡ Share Outcome to Pulse
+            </button>
+            <button class="btn block ghost" onclick="Nav.back('main')">
+              🎮 Return to Arcade Hub
             </button>
           </div>
         </div>
@@ -8031,7 +9048,7 @@ function renderActiveGame(room) {
   // Wire Chess clicks
   if (room.gameType === 'chess' && isMyTurn) {
     let selected = null;
-    $$('.chess-cell', modal).forEach(cell => {
+    $$('.chess-cell', canvas).forEach(cell => {
       cell.onclick = () => {
         const r = parseInt(cell.dataset.r, 10);
         const c = parseInt(cell.dataset.c, 10);
@@ -9066,10 +10083,12 @@ function linkify(text) {
 
 function metaHTML(m) {
   const mine = m.sender === ST.me.uid;
-  if (!mine) return '';
   const direct = !ST.chat || ST.chat.type === 'direct';
   const read = m.status === 'seen';
-  return `<div class="meta">${esc(fmtTime(m.timestamp))}${m.edited ? ' · edited' : ''}${direct ? ' ' + tick(read) : ''}</div>`;
+  const ts = m.timestamp || m.createdAt || now();
+  const timeStr = fmtTime(ts);
+  const fullTime = fmtFullTime(ts);
+  return `<div class="meta" title="Sent ${esc(fullTime)}" onclick="event.stopPropagation();openMessageDetails('${esc(m.key)}')">${esc(timeStr)}${m.edited ? ' · edited' : ''}${mine && direct ? ' ' + tick(read) : ''}</div>`;
 }
 
 function reactionsHTML(m) {
@@ -9148,11 +10167,13 @@ function pollHTML(m) {
 function renderMessage(m) {
   const box = s('chat-messages'); if (!box || !m) return;
   const mine = m.sender === ST.me.uid;
+  const ts = m.timestamp || m.createdAt || now();
+  const dateStr = fmtMessageDate(ts);
   const prevSep = box.querySelector('.daysep:last-of-type');
-  const sepHTML = (prevSep && prevSep.textContent === fmtDay(m.timestamp)) ? '' : `<div class="daysep">${esc(fmtDay(m.timestamp))}</div>`;
+  const sepHTML = (prevSep && prevSep.textContent === dateStr) ? '' : `<div class="daysep">${esc(dateStr)}</div>`;
   const senderName = (!mine && ST.chat && ST.chat.type === 'group')
     ? `<div class="sender">${esc(userLabel(ST.users[m.sender] || { uid: m.sender }))}</div>` : '';
-  const reply = m.replyTo ? `<div class="reply-q"><b>${esc(m.replyTo.name || 'Reply')}</b><span>${esc(m.replyTo.text || 'Attachment')}</span></div>` : '';
+  const reply = m.replyTo ? `<div class="reply-q" onclick="scrollToMsg('${esc(m.replyTo.key)}')" title="Tap to jump to quoted message"><b>${esc(m.replyTo.name || 'Reply')}</b><span>${esc(m.replyTo.text || 'Attachment')}</span></div>` : '';
   const fwd = m.forwarded ? '<div style="font-size:11px;opacity:0.8;font-style:italic;margin-bottom:3px">↪ Forwarded</div>' : '';
   const isMedia = ['image','video','audio','voice','file'].indexOf(m.type) >= 0;
 
@@ -9175,6 +10196,62 @@ function renderMessage(m) {
     if (m.media && (m.media.kind === 'p2p' || m.media.kind === 'inline')) hydrateMedia(m);
   }
   updateEmptyState();
+}
+
+function scrollToMsg(key) {
+  if (!key) return;
+  const el = s('m-' + key);
+  if (!el) {
+    toast('Original message is not in current view or was deleted.');
+    return;
+  }
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('highlight-msg');
+  setTimeout(() => el.classList.remove('highlight-msg'), 1600);
+}
+
+function openMessageDetails(key) {
+  const m = (ST.chatMsgs && ST.chatMsgs[key]) || null;
+  if (!m) return;
+  const mine = m.sender === ST.me.uid;
+  const author = mine ? 'You' : userLabel(ST.users[m.sender] || { uid: m.sender });
+  const ts = m.timestamp || m.createdAt || now();
+  const statusStr = mine ? (m.status === 'seen' ? '✓✓ Seen / Read' : m.status === 'delivered' ? '✓✓ Delivered' : '✓ Sent') : 'Received';
+  const seenStr = m.seenAt ? ` · read at ${fmtTime(m.seenAt)}` : '';
+
+  openModal(`
+    <div class="pad">
+      <h3 style="margin:0 0 16px;font-size:17px">Message Details</h3>
+      <div style="display:flex;flex-direction:column;gap:14px;font-size:14px">
+        <div>
+          <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Sender</div>
+          <div style="font-weight:700;margin-top:2px">${esc(author)}</div>
+        </div>
+        <div>
+          <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Sent Timestamp</div>
+          <div style="font-weight:600;margin-top:2px">${esc(fmtFullTime(ts))}</div>
+        </div>
+        <div>
+          <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Status</div>
+          <div style="font-weight:600;margin-top:2px">${esc(statusStr + seenStr)}</div>
+        </div>
+        <div>
+          <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Message Type</div>
+          <div style="font-weight:600;margin-top:2px;text-transform:capitalize">${esc(m.type || 'text')}</div>
+        </div>
+        ${m.replyTo ? `
+          <div>
+            <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Reply Target</div>
+            <div style="padding:10px 12px;background:var(--kr-bg2);border-radius:12px;border-left:3px solid var(--kr-brand);margin-top:4px">
+              <div style="font-weight:700;font-size:13px">${esc(m.replyTo.name || 'Message')}</div>
+              <div style="font-size:13px;color:var(--kr-mut);margin-top:2px">${esc(m.replyTo.text || '')}</div>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+      <button class="btn block ghost" onclick="Nav.close('ov-modal')" style="margin-top:20px">Close</button>
+    </div>
+  `);
 }
 
 function refreshMessage(key) {
@@ -10547,12 +11624,40 @@ function openInvite() {
 }
 
 function logOut() {
-  confirmSheet('Log out of KLYRO', 'You will need to sign in again to access your messages.', 'Log out', () => {
+  confirmSheet('Log out of KLYRO', 'You will need to sign in again to access your messages.', 'Log out', async () => {
+    try {
+      if (ST.me && ST.me.uid) {
+        await db.ref('users/' + ST.me.uid + '/online').set(false).catch(() => {});
+        await db.ref('users/' + ST.me.uid + '/lastSeen').set(now()).catch(() => {});
+      }
+    } catch (e) {}
+
     Calls.end(true);
     if (ST.mediaRec) Voice.cancel();
     unlistenAll();
     StatusEngine.teardown();
-    try { auth.signOut(); } catch (e) {}
+    if (typeof PostsEngine !== 'undefined') PostsEngine.teardown();
+    if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.teardown();
+
+    // Clean up all navigation overlays
+    ['ov-onboarding', 'ov-arcade-game', 'ov-sheet', 'ov-modal', 'ov-media', 'ov-story'].forEach(id => {
+      const el = s(id);
+      if (el) el.classList.remove('open');
+    });
+
+    // Reset session caches
+    ST.me = null;
+    ST.chats = {};
+    ST.chatMsgs = {};
+    ST.unread = {};
+    ST.requests = {};
+    ST.chat = null;
+    ST.partnerTyping = false;
+    ST.gamerProfile = null;
+
+    try { await auth.signOut(); } catch (e) {}
+    AuthState.set(AuthState.SIGNED_OUT);
+    toast('Logged out of KLYRO');
   }, true);
 }
 
@@ -10661,6 +11766,7 @@ function initLiveApp() {
   listenGroups();
   listenUnread();
   listenRequests();
+  listenNotifications();
   MediaEngine.init();
   StatusEngine.init();
   if (typeof PostsEngine !== 'undefined') PostsEngine.init();
@@ -10694,6 +11800,14 @@ function bootKlyro() {
 
   let resolved = false;
 
+  if (!auth) {
+    console.warn('[KLYRO] Firebase Auth unavailable — showing login view');
+    setTimeout(() => {
+      AuthState.set(AuthState.SIGNED_OUT);
+    }, 500);
+    return;
+  }
+
   auth.onAuthStateChanged(user => {
     if (!user) {
       resolved = true;
@@ -10711,7 +11825,26 @@ function bootKlyro() {
     AuthState.set(AuthState.SIGNED_IN_PROFILE_LOADING);
     unlisten('me');
 
+    // Profile load safety timeout: If RTDB is slow, fallback to basic user profile so app opens
+    const profileTimer = setTimeout(() => {
+      if (!resolved && user) {
+        resolved = true;
+        const fallbackName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+        const fallbackUsername = (user.email ? user.email.split('@')[0] : 'user_' + user.uid.slice(0, 5)).replace(/[^a-zA-Z0-9._]/g, '_');
+        ST.me = {
+          uid: user.uid,
+          email: user.email || '',
+          name: fallbackName,
+          username: fallbackUsername
+        };
+        initLiveApp();
+        AuthState.set(AuthState.READY);
+        UpBar.hide();
+      }
+    }, 6000);
+
     listen('me', 'users/' + user.uid, 'value', sn => {
+      clearTimeout(profileTimer);
       const profile = sn.val();
       if (!profile || !profile.username) {
         ST.me = Object.assign({ uid: user.uid, email: user.email }, profile || {});
@@ -10740,23 +11873,32 @@ function bootKlyro() {
         if (Nav.current === 'chat') syncChatHeader();
       }
     }, err => {
+      clearTimeout(profileTimer);
       DBG('Profile load error:', err);
-      if (!resolved) toast('Could not load profile — check your connection.');
+      if (!resolved) {
+        resolved = true;
+        AuthState.set(AuthState.SIGNED_OUT);
+        toast('Could not load profile — check your connection.');
+      }
     });
   });
 
-  /* 10s fallback guard: never leave user stuck permanently on loading screen */
+  /* Fast 4s / 6s fallback guard: never leave user stuck permanently on loading screen */
   setTimeout(() => {
     if (!resolved && Nav.current === 'loading') {
       const t = s('loading-text');
-      if (t) t.textContent = 'Connecting is taking longer than expected…';
+      if (t) {
+        t.innerHTML = 'Connecting taking longer than usual…<br><button id="btn-force-open-app" style="margin-top:12px;padding:6px 16px;background:var(--kr-brand);color:#fff;border-radius:10px;font-size:13px;font-weight:600">Open Sign In</button>';
+        const b = s('btn-force-open-app');
+        if (b) b.onclick = () => AuthState.set(AuthState.SIGNED_OUT);
+      }
       setTimeout(() => {
         if (!resolved && Nav.current === 'loading') {
           AuthState.set(AuthState.SIGNED_OUT);
         }
-      }, 5000);
+      }, 3000);
     }
-  }, 10000);
+  }, 4000);
 }
 
 

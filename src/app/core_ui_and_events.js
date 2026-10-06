@@ -125,17 +125,44 @@ function buildMessage(extra) {
 function pushMessage(msg) {
   if (!ST.chat) return Promise.reject(new Error('no-chat'));
   const { type, chatId, targetId } = ST.chat;
+
+  // Canonical server-safe timestamp
+  msg.timestamp = msg.timestamp || now();
+  msg.createdAt = msg.timestamp;
+
   return db.ref(pathFor(chatId, type)).push(msg).then(ref => {
+    const msgId = ref.key;
     if (type === 'direct') {
       db.ref('users/' + ST.me.uid + '/lastMsgAt').set(now()).catch(() => {});
       bumpUnread(targetId, chatId);
+      dispatchMessageNotification(targetId, chatId, msgId, msg);
     } else {
       Object.keys(ST.chat.members || {}).forEach(uid => {
-        if (uid !== ST.me.uid) bumpUnread(uid, chatId);
+        if (uid !== ST.me.uid) {
+          bumpUnread(uid, chatId);
+          dispatchMessageNotification(uid, chatId, msgId, msg);
+        }
       });
     }
     return ref;
   });
+}
+
+function dispatchMessageNotification(recipientUid, conversationId, messageId, msg) {
+  if (!recipientUid || !ST.me || recipientUid === ST.me.uid) return;
+  const preview = getPreviewText(msg);
+  db.ref('userNotifications/' + recipientUid + '/' + messageId).set({
+    id: messageId,
+    messageId: messageId,
+    conversationId: conversationId,
+    senderId: ST.me.uid,
+    senderName: ST.me.name || 'Friend',
+    senderPhoto: ST.me.photo || '',
+    text: preview || 'New message',
+    type: msg.type || 'text',
+    createdAt: now(),
+    status: 'unread'
+  }).catch(() => {});
 }
 
 function sendText() {
@@ -291,7 +318,6 @@ function votePoll(key, index) {
 function openAttachSheet() {
   const hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   openSheet('Send Attachment', [
-    { icon: '🎮', label: 'Play Game', sub: 'Ludo, Chess or Carrom', run: openGameChallengeMenu },
     { icon: '🖼️', label: 'Photo', sub: 'High-quality compressed photo', run: () => pickFile('image') },
     { icon: '🎬', label: 'Video', sub: 'Fast P2P video transfer', run: () => pickFile('video') },
     { icon: '🎵', label: 'Audio file', run: () => pickFile('audio') },
@@ -302,17 +328,6 @@ function openAttachSheet() {
     { icon: '📍', label: 'Location', sub: 'Share current GPS location', run: shareLocation },
     { icon: '📷', label: 'Camera', sub: hasCamera ? 'Take photo now' : 'Unavailable', disabled: !hasCamera, run: capturePhoto },
     { icon: '📝', label: 'New status', sub: 'Post 24h status update', run: openStatusComposer }
-  ]);
-}
-
-function openGameChallengeMenu() {
-  if (!ST.chat) return;
-  const targetUid = ST.chat.targetId;
-  openSheet('Challenge to Arcade Game', [
-    { icon: '🎲', label: 'Play Ludo (2 Players)', run: () => ArcadeEngine.sendGameChallenge('ludo', targetUid) },
-    { icon: '🎲', label: 'Play Ludo (4 Players)', run: () => ArcadeEngine.sendGameChallenge('ludo', targetUid) },
-    { icon: '♟️', label: 'Play Speed Chess', run: () => ArcadeEngine.sendGameChallenge('chess', targetUid) },
-    { icon: '🎯', label: 'Play Carrom Strike', run: () => ArcadeEngine.sendGameChallenge('carrom', targetUid) }
   ]);
 }
 
@@ -821,6 +836,192 @@ function registerDevice(uid) {
   }).catch(() => {});
 }
 
+let activeNotifToast = null;
+let notifToastTimer = null;
+const seenNotifs = new Set();
+
+function listenNotifications() {
+  if (!ST.me) return;
+  unlisten('userNotifications');
+  listen('userNotifications', 'userNotifications/' + ST.me.uid, 'child_added', sn => {
+    const n = sn.val();
+    if (!n || !n.messageId) return;
+    const key = sn.key;
+    if (n.senderId === ST.me.uid || n.status !== 'unread') return;
+    if (seenNotifs.has(key)) return;
+    seenNotifs.add(key);
+
+    // If message was created more than 3 minutes ago, do not pop toast
+    if (n.createdAt && (now() - n.createdAt > 180000)) return;
+
+    // Check if user is currently looking at this exact chat while document is active/visible
+    const isCurrentActiveChat = (Nav.current === 'chat' && ST.chat && 
+      (ST.chat.chatId === n.conversationId || ST.chat.targetId === n.senderId) && 
+      !document.hidden);
+    
+    if (isCurrentActiveChat) {
+      // User is actively looking at this conversation: mark read silently
+      sn.ref.update({ status: 'seen' }).catch(() => {});
+      return;
+    }
+
+    // Trigger System / Web Notification if backgrounded or permitted
+    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+      try {
+        const sysNotif = new Notification(n.senderName || 'KLYRO', {
+          body: n.text || 'Sent you a message',
+          icon: n.senderPhoto || '/favicon.ico',
+          tag: 'msg_' + n.messageId, // Preserves exact message identity!
+          data: n
+        });
+        sysNotif.onclick = () => {
+          window.focus();
+          sysNotif.close();
+          handleNotificationReply(n);
+        };
+      } catch (e) {}
+    }
+
+    // Always show non-intrusive interactive in-app toast if document is visible
+    if (!document.hidden) {
+      showInAppNotificationToast(n);
+    }
+  });
+
+  // Also listen for service worker messages
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.addEventListener('message', ev => {
+        if (ev.data && ev.data.type === 'NOTIFICATION_REPLY_ACTION') {
+          const { data, replyText } = ev.data;
+          if (data) handleNotificationReply(data, replyText);
+        }
+      });
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    } catch (e) {}
+  }
+}
+
+function showInAppNotificationToast(n) {
+  const t = s('in-app-notification-toast');
+  if (!t) return;
+  activeNotifToast = n;
+
+  const senderEl = s('nt-sender');
+  if (senderEl) senderEl.textContent = n.senderName || 'Friend';
+
+  const textEl = s('nt-text');
+  if (textEl) textEl.textContent = n.text || 'New message';
+
+  const imgEl = s('nt-avatar-img');
+  const fallbackEl = s('nt-avatar-fallback');
+  if (imgEl && fallbackEl) {
+    if (n.senderPhoto) {
+      imgEl.src = n.senderPhoto;
+      imgEl.style.display = 'block';
+      fallbackEl.style.display = 'none';
+    } else {
+      imgEl.style.display = 'none';
+      fallbackEl.style.display = 'flex';
+      fallbackEl.textContent = initials(n.senderName) || '👤';
+    }
+  }
+
+  const replyBtn = s('nt-reply-btn');
+  if (replyBtn) {
+    replyBtn.onclick = (e) => {
+      e.stopPropagation();
+      hideInAppNotificationToast();
+      handleNotificationReply(n);
+    };
+  }
+
+  const closeBtn = s('nt-close-btn');
+  if (closeBtn) {
+    closeBtn.onclick = (e) => {
+      e.stopPropagation();
+      hideInAppNotificationToast();
+    };
+  }
+
+  // Progress fill animation for 8 seconds
+  const fill = s('nt-progress');
+  const totalMs = 8000;
+  const startTime = Date.now();
+  clearInterval(notifToastTimer);
+  if (fill) fill.style.transform = 'scaleX(1)';
+
+  notifToastTimer = setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const remaining = Math.max(0, 1 - (elapsed / totalMs));
+    if (fill) fill.style.transform = `scaleX(${remaining})`;
+    if (remaining <= 0) {
+      clearInterval(notifToastTimer);
+      hideInAppNotificationToast();
+    }
+  }, 100);
+
+  t.classList.add('show');
+
+  // Friendly soft vibration if available
+  try {
+    if (navigator && navigator.vibrate) navigator.vibrate([25, 35, 25]);
+  } catch (e) {}
+}
+
+function hideInAppNotificationToast() {
+  const t = s('in-app-notification-toast');
+  if (t) t.classList.remove('show');
+  clearInterval(notifToastTimer);
+  notifToastTimer = null;
+  activeNotifToast = null;
+}
+
+function handleNotificationReply(notif, inlineText) {
+  if (!notif || !ST.me) return;
+
+  // Mark notification as replied or opened
+  db.ref('userNotifications/' + ST.me.uid + '/' + notif.messageId).update({
+    status: inlineText ? 'replied' : 'opened'
+  }).catch(() => {});
+
+  if (inlineText && inlineText.trim()) {
+    // Immediate inline reply execution
+    const replyPayload = {
+      type: 'text',
+      text: inlineText.trim(),
+      sender: ST.me.uid,
+      timestamp: now(),
+      createdAt: now(),
+      status: 'sent',
+      replyTo: {
+        key: notif.messageId,
+        name: notif.senderName,
+        text: notif.text
+      }
+    };
+    db.ref('messages/' + notif.conversationId).push(replyPayload).then(() => {
+      bumpUnread(notif.senderId, notif.conversationId);
+      toast('Reply sent to ' + notif.senderName);
+    }).catch(() => toast('Could not send reply.'));
+    return;
+  }
+
+  // Fallback / standard interactive reply:
+  // Open the EXACT conversation and target that SPECIFIC message!
+  openChat(notif.senderId, 'direct', notif.conversationId);
+  setReply({
+    key: notif.messageId,
+    sender: notif.senderId,
+    name: notif.senderName,
+    text: notif.text
+  });
+  const inp = s('composer-input');
+  if (inp) {
+    inp.focus();
+  }
+}
+
 function notify(title, body) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   try { new Notification(title, { body: body, icon: '/favicon.ico' }); } catch (e) {}
@@ -1128,24 +1329,25 @@ function renderHome() {
   const container = s('home-content');
   if (!container || !ST.me) return;
 
-  const prof = ST.gamerProfile || { level: 1, xp: 0, totalWins: 0, streak: 0 };
   const onlineUsers = Object.values(ST.users || {}).filter(u => u && u.uid !== ST.me.uid && isUserOnlineNow(u) && !isBlockedBy(u));
   const recentChats = (typeof chatEntries === 'function' ? chatEntries() : []).slice(0, 3);
   const pulsePosts = (typeof PostsEngine !== 'undefined' ? PostsEngine.getSortedFeed() : []).slice(0, 2);
 
   container.innerHTML = `
     <div style="padding:14px 14px 32px">
-      <!-- 1. GREETING & GAMER LEVEL HERO -->
+      <!-- 1. GREETING & PROFILE HERO -->
       <div style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(124,58,237,0.08));border:1px solid rgba(37,99,235,0.2);border-radius:20px;padding:16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:12px">
-          ${getAvatarHTML(ST.me, 'md')}
+          <div onclick="Nav.tab_('profile')" style="cursor:pointer">
+            ${getAvatarHTML(ST.me, 'md')}
+          </div>
           <div>
             <div style="font-size:16px;font-weight:800;color:var(--kr-txt)">Hello, ${esc(userLabel(ST.me).split(' ')[0])}!</div>
-            <div style="font-size:12px;color:var(--kr-mut)">Arcade Level ${prof.level} · ${prof.xp} XP</div>
+            <div style="font-size:12px;color:var(--kr-mut)">${esc(handleFrom(ST.me))}</div>
           </div>
         </div>
-        <button class="btn sm" onclick="Nav.tab_('arcade')" style="height:32px;font-size:12.5px;padding:0 12px">
-          🎮 Play Arcade
+        <button class="btn sm" onclick="Nav.tab_('profile')" style="height:32px;font-size:12.5px;padding:0 12px;background:var(--kr-brand)">
+          👤 My Profile
         </button>
       </div>
 
@@ -1163,9 +1365,9 @@ function renderHome() {
           <div style="font-size:22px;margin-bottom:4px">💬</div>
           <div style="font-size:11.5px;font-weight:700">Messages</div>
         </button>
-        <button class="card" onclick="openGamerProfileModal()" style="padding:12px 6px;border-radius:14px;border:1px solid var(--kr-line);background:var(--kr-elev);cursor:pointer">
-          <div style="font-size:22px;margin-bottom:4px">🏆</div>
-          <div style="font-size:11.5px;font-weight:700">Stats</div>
+        <button class="card" onclick="openSwitchAccountModal()" style="padding:12px 6px;border-radius:14px;border:1px solid var(--kr-line);background:var(--kr-elev);cursor:pointer">
+          <div style="font-size:22px;margin-bottom:4px">👥</div>
+          <div style="font-size:11.5px;font-weight:700">Switch Acct</div>
         </button>
       </div>
 
@@ -1187,22 +1389,16 @@ function renderHome() {
         `}
       </div>
 
-      <!-- 4. ARCADE HIGHLIGHTS -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-weight:700;font-size:14px">Arcade Highlights</div>
-        <a style="font-size:12px;color:var(--kr-brand);cursor:pointer;font-weight:600" onclick="Nav.tab_('arcade')">All Games</a>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-        <div class="arcade-card" onclick="ArcadeEngine.createRoom('ludo', 2)" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:16px;padding:14px;cursor:pointer">
-          <div style="font-size:26px;margin-bottom:6px">🎲</div>
-          <div style="font-weight:800;font-size:14px">Ludo Club</div>
-          <div style="font-size:11.5px;color:var(--kr-mut)">Classic 1v1 Race</div>
+      <!-- 4. PROFILE & ACCOUNT QUICK SHORTCUT -->
+      <div style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:18px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:24px">⚙️</div>
+          <div>
+            <div style="font-size:14px;font-weight:800">Account &amp; Profile</div>
+            <div style="font-size:12px;color:var(--kr-mut)">Manage profiles, theme, and security</div>
+          </div>
         </div>
-        <div class="arcade-card" onclick="ArcadeEngine.createRoom('chess', 2)" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:16px;padding:14px;cursor:pointer">
-          <div style="font-size:26px;margin-bottom:6px">♟️</div>
-          <div style="font-weight:800;font-size:14px">Speed Chess</div>
-          <div style="font-size:11.5px;color:var(--kr-mut)">Tactical Duel</div>
-        </div>
+        <button class="btn sm outline" onclick="Nav.tab_('profile')" style="font-size:12px;height:30px;padding:0 12px">Manage ›</button>
       </div>
 
       <!-- 5. TRENDING PULSE SPOTLIGHT -->

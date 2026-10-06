@@ -198,18 +198,32 @@ const firebaseConfig = {
   projectId: "ar-chat-7193d"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
-const auth = firebase.auth();
-const db   = firebase.database();
-const TS   = firebase.database.ServerValue.TIMESTAMP;
+let auth = null;
+let db   = null;
+let TS   = Date.now();
 
-/* Enable persistent auth locally so refresh never throws user back to login */
 try {
-  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  if (typeof firebase !== 'undefined') {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    auth = firebase.auth();
+    db   = firebase.database();
+    TS   = (firebase.database && firebase.database.ServerValue) ? firebase.database.ServerValue.TIMESTAMP : Date.now();
+
+    /* Enable persistent auth locally so refresh never throws user back to login */
+    try {
+      if (firebase.auth && firebase.auth.Auth && firebase.auth.Auth.Persistence) {
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      }
+    } catch (e) {
+      console.warn('[KLYRO] Auth persistence error:', e);
+    }
+  } else {
+    console.error('[KLYRO] Firebase SDK not loaded from CDN.');
+  }
 } catch (e) {
-  console.warn('[KLYRO] Auth persistence error:', e);
+  console.error('[KLYRO] Firebase initialization error:', e);
 }
 
 /* ============================ SHORTHANDS & UTILITIES ============================ */
@@ -245,11 +259,27 @@ function fmtTime(ts) {
   try { return new Date(ts || now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
 }
 
-function fmtDay(ts) {
+function fmtFullTime(ts) {
+  try {
+    const d = new Date(ts || now());
+    const day = d.getDate();
+    const month = d.toLocaleDateString([], { month: 'long' });
+    const year = d.getFullYear();
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `${day} ${month} ${year}, ${time}`;
+  } catch (e) { return ''; }
+}
+
+function fmtMessageDate(ts) {
   const d = new Date(ts || now()), t = new Date(), y = new Date(Date.now() - 864e5);
   if (d.toDateString() === t.toDateString()) return 'Today';
   if (d.toDateString() === y.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: d.getFullYear() === t.getFullYear() ? undefined : 'numeric' });
+  const month = d.toLocaleDateString([], { month: 'long' });
+  return `${d.getDate()} ${month} ${d.getFullYear()}`;
+}
+
+function fmtDay(ts) {
+  return fmtMessageDate(ts);
 }
 
 function fmtWhen(ts) {

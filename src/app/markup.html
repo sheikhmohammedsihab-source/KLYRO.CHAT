@@ -25,6 +25,7 @@
 
         <!-- LOGIN FORM -->
         <form id="login-form" autocomplete="on" style="display:block">
+          <div id="login-saved-accounts" style="display:none"></div>
           <div class="field">
             <label>Email address</label>
             <input id="login-email" class="inp" type="email" placeholder="you@example.com" autocomplete="email" required>
@@ -178,9 +179,9 @@
       </div>
     </section>
 
-    <!-- TAB 4: ARCADE -->
-    <section class="panel" id="tab-arcade">
-      <div class="scroll" id="arcade-content"></div>
+    <!-- TAB 4: PROFILE SECTION & ACCOUNT SWITCHER -->
+    <section class="panel" id="tab-profile">
+      <div class="scroll" id="profile-content"></div>
     </section>
 
     <!-- TAB 5: DISCOVER / PEOPLE -->
@@ -215,14 +216,14 @@
         <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>Pulse</span>
       </button>
-      <button class="nav-item" id="nav-arcade" data-tab="arcade">
-        <svg viewBox="0 0 24 24"><path d="M6 11h4m-2-2v4m8-3a1 1 0 11-2 0 1 1 0 012 0zm3 3a1 1 0 11-2 0 1 1 0 012 0zM6 19h12a4 4 0 004-4v-4a4 4 0 00-4-4H6a4 4 0 00-4 4v4a4 4 0 004 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span>Arcade</span>
-      </button>
       <button class="nav-item" id="nav-people" data-tab="people">
         <span class="pill" id="badge-people-online" style="display:none;background:var(--kr-ok)">0</span>
         <svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 10-4-4 4 4 0 004 4zm-8 1a3 3 0 10-3-3 3 3 0 003 3zm0 2c-2.3 0-7 1.2-7 3.5V20h8v-2.5c0-.9.4-1.8 1.1-2.5A12 12 0 008 14zm8 0c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z"/></svg>
         <span>Discover</span>
+      </button>
+      <button class="nav-item" id="nav-profile" data-tab="profile">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Profile</span>
       </button>
     </nav>
   </div>
@@ -354,11 +355,6 @@
   </div>
 </div>
 
-<!-- ARCADE MULTIPLAYER GAME MODAL -->
-<div class="ov center" id="ov-arcade-game">
-  <div id="arcade-game-view" style="width:100%;max-width:440px"></div>
-</div>
-
 <div id="upload-bar">
   <div style="font-size:18px">⬆️</div>
   <div class="ubx">
@@ -369,29 +365,27 @@
   <button class="ib" id="ub-cancel" aria-label="Cancel transfer">✕</button>
 </div>
 
-<!-- Non-intrusive game challenge toast -->
-<div id="game-challenge-toast" class="challenge-toast" role="alert" aria-live="assertive">
-  <div class="ct-progress-bar"><div class="ct-progress-fill" id="ct-progress"></div></div>
-  <div class="ct-body">
-    <div class="ct-avatar-wrap">
-      <img id="ct-avatar-img" class="ct-avatar" src="" alt="Challenger Avatar" style="display:none">
-      <div id="ct-avatar-fallback" class="ct-avatar-fallback">🎮</div>
-      <span id="ct-badge-icon" class="ct-badge-icon">🎲</span>
+<!-- Interactive In-App Notification Toast (Specific-Message Targeting) -->
+<div id="in-app-notification-toast" class="notif-toast" role="alert" aria-live="assertive">
+  <div class="nt-progress-bar"><div class="nt-progress-fill" id="nt-progress"></div></div>
+  <div class="nt-body">
+    <div class="nt-avatar-wrap">
+      <img id="nt-avatar-img" class="nt-avatar" src="" alt="Sender Avatar" style="display:none">
+      <div id="nt-avatar-fallback" class="nt-avatar-fallback">👤</div>
+      <span class="nt-badge-icon">💬</span>
     </div>
-    <div class="ct-content">
-      <div class="ct-header">
-        <span class="ct-title" id="ct-title">Direct Challenge</span>
-        <span class="ct-time">Just now</span>
+    <div class="nt-content">
+      <div class="nt-header">
+        <span class="nt-sender" id="nt-sender">User</span>
+        <span class="nt-time">Just now</span>
       </div>
-      <div class="ct-desc" id="ct-desc"><strong>Alex</strong> challenged you to <strong>Speed Chess</strong></div>
-      <div class="ct-note" id="ct-note">Tap Accept to jump straight into the lobby!</div>
+      <div class="nt-text" id="nt-text">New message received</div>
     </div>
-    <div class="ct-actions">
-      <button type="button" class="ct-btn-accept" id="ct-accept-btn">
-        <span class="ct-btn-icon">⚡</span>
-        <span>Accept</span>
+    <div class="nt-actions">
+      <button type="button" class="nt-btn-reply" id="nt-reply-btn" title="Reply to this exact message">
+        <span>↩ Reply</span>
       </button>
-      <button type="button" class="ct-btn-close" id="ct-close-btn" aria-label="Dismiss challenge">✕</button>
+      <button type="button" class="nt-btn-close" id="nt-close-btn" aria-label="Dismiss">✕</button>
     </div>
   </div>
 </div>

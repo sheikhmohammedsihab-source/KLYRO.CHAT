@@ -150,6 +150,14 @@
         ".write": "auth != null && auth.uid === $uid"
       }
     },
+    "userNotifications": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$notificationId": {
+          ".write": "auth != null"
+        }
+      }
+    },
     "gameChallenges": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

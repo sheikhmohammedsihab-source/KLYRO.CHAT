@@ -871,13 +871,11 @@ function openInvite() {
 }
 
 function logOut() {
-  confirmSheet('Log out of KLYRO', 'You will need to sign in again to access your messages.', 'Log out', () => {
-    Calls.end(true);
-    if (ST.mediaRec) Voice.cancel();
-    unlistenAll();
-    StatusEngine.teardown();
-    try { auth.signOut(); } catch (e) {}
-  }, true);
+  if (typeof confirmLogoutModal === 'function') {
+    confirmLogoutModal();
+  } else {
+    executeLogout(false);
+  }
 }
 
 function renderSettings() {
@@ -985,21 +983,25 @@ function initLiveApp() {
   listenGroups();
   listenUnread();
   listenRequests();
+  listenNotifications();
   MediaEngine.init();
   StatusEngine.init();
   if (typeof PostsEngine !== 'undefined') PostsEngine.init();
-  if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.init();
   Calls.listenCalls();
   presence(ST.me.uid);
   registerDevice(ST.me.uid);
   Store.cleanup();
   Store.open().catch(() => {});
 
+  if (typeof AccountManager !== 'undefined') {
+    AccountManager.saveActive(ST.me);
+  }
+
   renderChats();
   renderPeople();
   renderStatus();
   if (typeof renderPosts === 'function') renderPosts();
-  if (typeof renderArcade === 'function') renderArcade();
+  if (typeof renderProfileSection === 'function') renderProfileSection();
   renderSettings();
 
   if ('Notification' in window && Notification.permission === 'default') {
@@ -1018,6 +1020,15 @@ function bootKlyro() {
 
   let resolved = false;
 
+  if (!auth) {
+    console.warn('[KLYRO] Firebase Auth unavailable — showing login view');
+    setTimeout(() => {
+      AuthState.set(AuthState.SIGNED_OUT);
+      if (typeof AccountManager !== 'undefined') AccountManager.renderSavedAccountsOnLogin();
+    }, 500);
+    return;
+  }
+
   auth.onAuthStateChanged(user => {
     if (!user) {
       resolved = true;
@@ -1026,16 +1037,35 @@ function bootKlyro() {
       MediaEngine.teardown();
       StatusEngine.teardown();
       if (typeof PostsEngine !== 'undefined') PostsEngine.teardown();
-      if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.teardown();
       Calls.end(true);
       AuthState.set(AuthState.SIGNED_OUT);
+      if (typeof AccountManager !== 'undefined') AccountManager.renderSavedAccountsOnLogin();
       return;
     }
 
     AuthState.set(AuthState.SIGNED_IN_PROFILE_LOADING);
     unlisten('me');
 
+    // Profile load safety timeout: If RTDB is slow, fallback to basic user profile so app opens
+    const profileTimer = setTimeout(() => {
+      if (!resolved && user) {
+        resolved = true;
+        const fallbackName = user.displayName || (user.email ? user.email.split('@')[0] : 'User');
+        const fallbackUsername = (user.email ? user.email.split('@')[0] : 'user_' + user.uid.slice(0, 5)).replace(/[^a-zA-Z0-9._]/g, '_');
+        ST.me = {
+          uid: user.uid,
+          email: user.email || '',
+          name: fallbackName,
+          username: fallbackUsername
+        };
+        initLiveApp();
+        AuthState.set(AuthState.READY);
+        UpBar.hide();
+      }
+    }, 6000);
+
     listen('me', 'users/' + user.uid, 'value', sn => {
+      clearTimeout(profileTimer);
       const profile = sn.val();
       if (!profile || !profile.username) {
         ST.me = Object.assign({ uid: user.uid, email: user.email }, profile || {});
@@ -1064,21 +1094,30 @@ function bootKlyro() {
         if (Nav.current === 'chat') syncChatHeader();
       }
     }, err => {
+      clearTimeout(profileTimer);
       DBG('Profile load error:', err);
-      if (!resolved) toast('Could not load profile — check your connection.');
+      if (!resolved) {
+        resolved = true;
+        AuthState.set(AuthState.SIGNED_OUT);
+        toast('Could not load profile — check your connection.');
+      }
     });
   });
 
-  /* 10s fallback guard: never leave user stuck permanently on loading screen */
+  /* Fast 4s / 6s fallback guard: never leave user stuck permanently on loading screen */
   setTimeout(() => {
     if (!resolved && Nav.current === 'loading') {
       const t = s('loading-text');
-      if (t) t.textContent = 'Connecting is taking longer than expected…';
+      if (t) {
+        t.innerHTML = 'Connecting taking longer than usual…<br><button id="btn-force-open-app" style="margin-top:12px;padding:6px 16px;background:var(--kr-brand);color:#fff;border-radius:10px;font-size:13px;font-weight:600">Open Sign In</button>';
+        const b = s('btn-force-open-app');
+        if (b) b.onclick = () => AuthState.set(AuthState.SIGNED_OUT);
+      }
       setTimeout(() => {
         if (!resolved && Nav.current === 'loading') {
           AuthState.set(AuthState.SIGNED_OUT);
         }
-      }, 5000);
+      }, 3000);
     }
-  }, 10000);
+  }, 4000);
 }
