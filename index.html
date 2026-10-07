@@ -891,7 +891,109 @@ svg {
 }
 
 .tick.read {
-  color: #7DD3FC;
+  color: #38BDF8;
+}
+
+/* Three-stage message delivery & read ticks */
+.tick-group {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: -2px;
+  font-weight: 800;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.tick-group.sent {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.tick-group.delivered {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.tick-group.read {
+  color: #38BDF8 !important;
+  text-shadow: 0 0 6px rgba(56, 189, 248, 0.6);
+}
+
+/* Swipe-to-reply mechanics */
+.mwrap {
+  position: relative;
+  touch-action: pan-y;
+  transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1);
+  will-change: transform;
+}
+
+.mwrap.swiping {
+  transition: none;
+}
+
+.swipe-reply-cue {
+  position: absolute;
+  left: -44px;
+  top: 50%;
+  transform: translateY(-50%) scale(0.6);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--kr-brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+}
+
+.swipe-reply-cue.active {
+  transform: translateY(-50%) scale(1.15);
+  background: #10B981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.45);
+}
+
+/* Desktop hover quick-reply action */
+.msg-quick-reply {
+  display: none;
+  position: absolute;
+  top: 6px;
+  right: -32px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--kr-elev);
+  border: 1px solid var(--kr-line);
+  color: var(--kr-txt);
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: var(--kr-sh-1);
+  opacity: 0.85;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  z-index: 5;
+}
+
+.mwrap.me .msg-quick-reply {
+  right: auto;
+  left: -32px;
+}
+
+.mwrap:hover .msg-quick-reply {
+  display: flex;
+}
+
+.msg-quick-reply:hover {
+  opacity: 1;
+  transform: scale(1.15);
+  color: var(--kr-brand);
 }
 
 .reply-q {
@@ -901,6 +1003,12 @@ svg {
   border-radius: 6px;
   background: rgba(127, 127, 127, 0.15);
   opacity: 0.95;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.reply-q:hover {
+  background: rgba(127, 127, 127, 0.25);
 }
 
 .reply-q b {
@@ -2423,37 +2531,14 @@ textarea.inp {
   animation: heartPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+
+/* Pulse heart pop animation */
 @keyframes heartPop {
   0% { transform: scale(1); }
   50% { transform: scale(1.45); }
   100% { transform: scale(1); }
 }
 
-/* ============================ ARCADE & GAME STYLES ============================ */
-.arcade-card {
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
-}
-
-.arcade-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-}
-
-.game-invite-card {
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(124, 58, 237, 0.12));
-  border: 1px solid rgba(37, 99, 235, 0.25);
-}
-
-#ludo-dice-btn.rolling {
-  animation: diceSpin 0.4s ease-in-out infinite;
-}
-
-@keyframes diceSpin {
-  0% { transform: rotate(0deg) scale(1.05); }
-  50% { transform: rotate(180deg) scale(0.95); }
-  100% { transform: rotate(360deg) scale(1.05); }
-}
 
 
 </style>
@@ -2486,6 +2571,7 @@ textarea.inp {
 
         <!-- LOGIN FORM -->
         <form id="login-form" autocomplete="on" style="display:block">
+          <div id="login-saved-accounts" style="display:none"></div>
           <div class="field">
             <label>Email address</label>
             <input id="login-email" class="inp" type="email" placeholder="you@example.com" autocomplete="email" required>
@@ -2639,9 +2725,9 @@ textarea.inp {
       </div>
     </section>
 
-    <!-- TAB 4: ARCADE -->
-    <section class="panel" id="tab-arcade">
-      <div class="scroll" id="arcade-content"></div>
+    <!-- TAB 4: PROFILE SECTION & ACCOUNT SWITCHER -->
+    <section class="panel" id="tab-profile">
+      <div class="scroll" id="profile-content"></div>
     </section>
 
     <!-- TAB 5: DISCOVER / PEOPLE -->
@@ -2676,14 +2762,14 @@ textarea.inp {
         <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span>Pulse</span>
       </button>
-      <button class="nav-item" id="nav-arcade" data-tab="arcade">
-        <svg viewBox="0 0 24 24"><path d="M6 11h4m-2-2v4m8-3a1 1 0 11-2 0 1 1 0 012 0zm3 3a1 1 0 11-2 0 1 1 0 012 0zM6 19h12a4 4 0 004-4v-4a4 4 0 00-4-4H6a4 4 0 00-4 4v4a4 4 0 004 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span>Arcade</span>
-      </button>
       <button class="nav-item" id="nav-people" data-tab="people">
         <span class="pill" id="badge-people-online" style="display:none;background:var(--kr-ok)">0</span>
         <svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 10-4-4 4 4 0 004 4zm-8 1a3 3 0 10-3-3 3 3 0 003 3zm0 2c-2.3 0-7 1.2-7 3.5V20h8v-2.5c0-.9.4-1.8 1.1-2.5A12 12 0 008 14zm8 0c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z"/></svg>
         <span>Discover</span>
+      </button>
+      <button class="nav-item" id="nav-profile" data-tab="profile">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2m8-10a4 4 0 100-8 4 4 0 000 8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Profile</span>
       </button>
     </nav>
   </div>
@@ -2774,30 +2860,6 @@ textarea.inp {
     </div>
   </div>
 
-  <!-- ================= DEDICATED FULL-SCREEN ARCADE GAME VIEW ================= -->
-  <div id="view-arcade-game" class="view">
-    <header class="kr-bar" id="arcade-game-bar" style="border-bottom:1px solid var(--kr-line);background:var(--kr-bg);position:relative;z-index:10">
-      <button class="ib" id="btn-arcade-leave" aria-label="Exit Game" title="Leave match" onclick="ArcadeEngine.confirmLeaveGame()">
-        <svg viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px">
-        <div id="arcade-game-icon" style="font-size:24px;flex-shrink:0">🎮</div>
-        <div style="min-width:0;overflow:hidden">
-          <div id="arcade-game-title" style="font-weight:800;font-size:16px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">Arcade Arena</div>
-          <div id="arcade-game-subtitle" style="font-size:12px;color:var(--kr-mut);white-space:nowrap;text-overflow:ellipsis;overflow:hidden">Dedicated Game Page</div>
-        </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <span id="arcade-timer-badge" class="pillx" style="font-weight:700;display:none">45s</span>
-        <button class="ib sm" id="btn-arcade-sound" title="Sound Effects" onclick="ArcadeEngine.toggleAudio()">🔊</button>
-        <button class="ib sm" id="btn-arcade-rules" title="Game Rules" onclick="ArcadeEngine.showGameRules()">❓</button>
-      </div>
-    </header>
-    <div class="scroll" id="arcade-dedicated-canvas" style="display:flex;flex-direction:column;align-items:center;padding:12px 14px 48px;min-height:calc(100vh - 60px);background:var(--kr-bg)">
-      <!-- Rendered dynamically by ArcadeEngine -->
-    </div>
-  </div>
-
 </div><!-- /app -->
 
 <!-- ================= OVERLAYS ================= -->
@@ -2839,11 +2901,6 @@ textarea.inp {
   </div>
 </div>
 
-<!-- ARCADE MULTIPLAYER GAME MODAL -->
-<div class="ov center" id="ov-arcade-game">
-  <div id="arcade-game-view" style="width:100%;max-width:440px"></div>
-</div>
-
 <div id="upload-bar">
   <div style="font-size:18px">⬆️</div>
   <div class="ubx">
@@ -2852,33 +2909,6 @@ textarea.inp {
     <div class="bar" style="margin-top:6px"><i id="ub-progress"></i></div>
   </div>
   <button class="ib" id="ub-cancel" aria-label="Cancel transfer">✕</button>
-</div>
-
-<!-- Non-intrusive game challenge toast -->
-<div id="game-challenge-toast" class="challenge-toast" role="alert" aria-live="assertive">
-  <div class="ct-progress-bar"><div class="ct-progress-fill" id="ct-progress"></div></div>
-  <div class="ct-body">
-    <div class="ct-avatar-wrap">
-      <img id="ct-avatar-img" class="ct-avatar" src="" alt="Challenger Avatar" style="display:none">
-      <div id="ct-avatar-fallback" class="ct-avatar-fallback">🎮</div>
-      <span id="ct-badge-icon" class="ct-badge-icon">🎲</span>
-    </div>
-    <div class="ct-content">
-      <div class="ct-header">
-        <span class="ct-title" id="ct-title">Direct Challenge</span>
-        <span class="ct-time">Just now</span>
-      </div>
-      <div class="ct-desc" id="ct-desc"><strong>Alex</strong> challenged you to <strong>Speed Chess</strong></div>
-      <div class="ct-note" id="ct-note">Tap Accept to jump straight into the lobby!</div>
-    </div>
-    <div class="ct-actions">
-      <button type="button" class="ct-btn-accept" id="ct-accept-btn">
-        <span class="ct-btn-icon">⚡</span>
-        <span>Accept</span>
-      </button>
-      <button type="button" class="ct-btn-close" id="ct-close-btn" aria-label="Dismiss challenge">✕</button>
-    </div>
-  </div>
 </div>
 
 <!-- Interactive In-App Notification Toast (Specific-Message Targeting) -->
@@ -3180,6 +3210,57 @@ function fmtTime(ts) {
   try { return new Date(ts || now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
 }
 
+function fmtMessageTime(ts) {
+  if (!ts) return '';
+  try {
+    const d = new Date(ts);
+    const nowD = new Date();
+    const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (d.toDateString() === nowD.toDateString()) {
+      return timeStr;
+    }
+
+    const yesterday = new Date(Date.now() - 864e5);
+    if (d.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday ' + timeStr;
+    }
+
+    const sameYear = d.getFullYear() === nowD.getFullYear();
+    const dateStr = d.toLocaleDateString([], {
+      day: 'numeric',
+      month: 'short',
+      ...(sameYear ? {} : { year: '2-digit' })
+    });
+    return dateStr + ' ' + timeStr;
+  } catch (e) {
+    return fmtTime(ts);
+  }
+}
+
+function fmtChatPreviewTime(ts) {
+  if (!ts) return '';
+  try {
+    const d = new Date(ts);
+    const nowD = new Date();
+    if (d.toDateString() === nowD.toDateString()) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    const yesterday = new Date(Date.now() - 864e5);
+    if (d.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+    const diffDays = Math.floor((nowD - d) / 864e5);
+    if (diffDays < 7) {
+      return d.toLocaleDateString([], { weekday: 'short' });
+    }
+    const sameYear = d.getFullYear() === nowD.getFullYear();
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: '2-digit' }) });
+  } catch (e) {
+    return fmtWhen(ts);
+  }
+}
+
 function fmtFullTime(ts) {
   try {
     const d = new Date(ts || now());
@@ -3314,9 +3395,7 @@ const ST = {
   posts: {},
   postLikes: {},
   postComments: {},
-  userSaves: {},
-  arcadeGames: {},
-  activeGame: null
+  userSaves: {}
 };
 window.KLYRO_DEBUG = false;
 
@@ -3380,7 +3459,7 @@ const Nav = {
   _renderTab() {
     $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + this.tab));
     $$('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.tab === this.tab));
-    const titles = { home: 'KLYRO', chats: 'Chats', status: 'Status', posts: 'Pulse', arcade: 'Arcade', people: 'Discover', settings: 'Settings' };
+    const titles = { home: 'KLYRO', chats: 'Chats', status: 'Status', posts: 'Pulse', profile: 'My Profile', people: 'Discover', settings: 'Settings' };
     if (s('main-title')) s('main-title').textContent = titles[this.tab] || 'KLYRO';
     if (s('search-wrap')) s('search-wrap').style.display = (this.tab === 'chats' || this.tab === 'people' || this.tab === 'posts') ? 'block' : 'none';
     if (s('fab')) s('fab').style.display = (this.tab === 'chats' || this.tab === 'people' || this.tab === 'status' || this.tab === 'posts') ? 'flex' : 'none';
@@ -3389,7 +3468,7 @@ const Nav = {
     if (this.tab === 'chats') renderChats();
     if (this.tab === 'status') renderStatus();
     if (this.tab === 'posts' && typeof renderPosts === 'function') renderPosts();
-    if (this.tab === 'arcade' && typeof renderArcade === 'function') renderArcade();
+    if (this.tab === 'profile' && typeof renderProfileSection === 'function') renderProfileSection();
     if (this.tab === 'people') renderPeople();
     if (this.tab === 'settings') renderSettings();
   },
@@ -4409,11 +4488,24 @@ function getPreviewText(m) {
 }
 
 function buildMessage(extra) {
-  const base = { sender: ST.me.uid, timestamp: now(), status: 'sent' };
+  const ts = now();
+  const base = {
+    sender: ST.me.uid,
+    timestamp: ts,
+    createdAt: ts,
+    status: 'sent'
+  };
   const st = settingsOf(ST.me);
-  if (st.disappearSeconds > 0) base.expiresAt = now() + st.disappearSeconds * 1000;
+  if (st.disappearSeconds > 0) base.expiresAt = ts + st.disappearSeconds * 1000;
   if (ST.replying) {
-    base.replyTo = { key: ST.replying.key, name: ST.replying.name, text: ST.replying.text };
+    base.replyToMessageId = ST.replying.key;
+    base.replyTo = {
+      key: ST.replying.key,
+      messageId: ST.replying.key,
+      sender: ST.replying.sender,
+      name: ST.replying.name,
+      text: ST.replying.text
+    };
     cancelReply();
   }
   return Object.assign(base, extra || {});
@@ -4425,7 +4517,8 @@ function pushMessage(msg) {
 
   // Canonical server-safe timestamp
   msg.timestamp = msg.timestamp || now();
-  msg.createdAt = msg.timestamp;
+  msg.createdAt = msg.createdAt || msg.timestamp;
+  msg.status = msg.status || 'sent';
 
   return db.ref(pathFor(chatId, type)).push(msg).then(ref => {
     const msgId = ref.key;
@@ -4476,14 +4569,29 @@ function sendText() {
 }
 
 function setReply(m) {
-  ST.replying = { key: m.key, name: m.sender === ST.me.uid ? 'You' : userLabel(ST.users[m.sender] || {}), text: getPreviewText(m).slice(0, 120) };
+  if (!m) return;
+  const key = m.key || m.messageId || m.id;
+  const senderUid = m.sender || '';
+  const senderName = (ST.me && senderUid === ST.me.uid) ? 'You' : userLabel(ST.users[senderUid] || { name: m.senderName });
+  ST.replying = {
+    key: key,
+    messageId: key,
+    sender: senderUid,
+    name: senderName || 'User',
+    text: (getPreviewText(m) || m.text || 'Attachment').slice(0, 140)
+  };
   const p = s('reply-preview');
   if (p) {
     p.classList.add('show');
-    s('reply-author').textContent = ST.replying.name;
-    s('reply-text').textContent = ST.replying.text;
+    const authEl = s('reply-author');
+    const textEl = s('reply-text');
+    if (authEl) authEl.textContent = ST.replying.name;
+    if (textEl) textEl.textContent = ST.replying.text;
   }
-  const inp = s('composer-input'); if (inp) inp.focus();
+  const inp = s('composer-input');
+  if (inp) {
+    inp.focus();
+  }
 }
 
 function cancelReply() {
@@ -4615,7 +4723,6 @@ function votePoll(key, index) {
 function openAttachSheet() {
   const hasCamera = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   openSheet('Send Attachment', [
-    { icon: '🎮', label: 'Play Game', sub: 'Ludo, Chess or Carrom', run: openGameChallengeMenu },
     { icon: '🖼️', label: 'Photo', sub: 'High-quality compressed photo', run: () => pickFile('image') },
     { icon: '🎬', label: 'Video', sub: 'Fast P2P video transfer', run: () => pickFile('video') },
     { icon: '🎵', label: 'Audio file', run: () => pickFile('audio') },
@@ -4626,17 +4733,6 @@ function openAttachSheet() {
     { icon: '📍', label: 'Location', sub: 'Share current GPS location', run: shareLocation },
     { icon: '📷', label: 'Camera', sub: hasCamera ? 'Take photo now' : 'Unavailable', disabled: !hasCamera, run: capturePhoto },
     { icon: '📝', label: 'New status', sub: 'Post 24h status update', run: openStatusComposer }
-  ]);
-}
-
-function openGameChallengeMenu() {
-  if (!ST.chat) return;
-  const targetUid = ST.chat.targetId;
-  openSheet('Challenge to Arcade Game', [
-    { icon: '🎲', label: 'Play Ludo (2 Players)', run: () => ArcadeEngine.sendGameChallenge('ludo', targetUid) },
-    { icon: '🎲', label: 'Play Ludo (4 Players)', run: () => ArcadeEngine.sendGameChallenge('ludo', targetUid) },
-    { icon: '♟️', label: 'Play Speed Chess', run: () => ArcadeEngine.sendGameChallenge('chess', targetUid) },
-    { icon: '🎯', label: 'Play Carrom Strike', run: () => ArcadeEngine.sendGameChallenge('carrom', targetUid) }
   ]);
 }
 
@@ -5169,9 +5265,30 @@ function listenNotifications() {
       !document.hidden);
     
     if (isCurrentActiveChat) {
-      // User is actively looking at this conversation: mark read silently
+      // User is actively looking at this conversation: mark delivered & read
       sn.ref.update({ status: 'seen' }).catch(() => {});
+      const userReads = privacyOf(ST.me).readReceipts !== false;
+      const statusToSet = userReads ? 'seen' : 'delivered';
+      if (n.conversationId && n.messageId) {
+        db.ref('messages/' + n.conversationId + '/' + n.messageId).update({
+          status: statusToSet,
+          deliveredAt: now(),
+          seenAt: userReads ? now() : null
+        }).catch(() => {});
+      }
       return;
+    }
+
+    // Message reached recipient's active device session: mark delivered (✓✓) on server!
+    if (n.conversationId && n.messageId) {
+      db.ref('messages/' + n.conversationId + '/' + n.messageId).transaction(cur => {
+        if (cur && (!cur.status || cur.status === 'sent')) {
+          cur.status = 'delivered';
+          cur.deliveredAt = cur.deliveredAt || now();
+          return cur;
+        }
+        return undefined;
+      }).catch(() => {});
     }
 
     // Trigger System / Web Notification if backgrounded or permitted
@@ -5638,24 +5755,25 @@ function renderHome() {
   const container = s('home-content');
   if (!container || !ST.me) return;
 
-  const prof = ST.gamerProfile || { level: 1, xp: 0, totalWins: 0, streak: 0 };
   const onlineUsers = Object.values(ST.users || {}).filter(u => u && u.uid !== ST.me.uid && isUserOnlineNow(u) && !isBlockedBy(u));
   const recentChats = (typeof chatEntries === 'function' ? chatEntries() : []).slice(0, 3);
   const pulsePosts = (typeof PostsEngine !== 'undefined' ? PostsEngine.getSortedFeed() : []).slice(0, 2);
 
   container.innerHTML = `
     <div style="padding:14px 14px 32px">
-      <!-- 1. GREETING & GAMER LEVEL HERO -->
+      <!-- 1. GREETING & PROFILE HERO -->
       <div style="background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(124,58,237,0.08));border:1px solid rgba(37,99,235,0.2);border-radius:20px;padding:16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:12px">
-          ${getAvatarHTML(ST.me, 'md')}
+          <div onclick="Nav.tab_('profile')" style="cursor:pointer">
+            ${getAvatarHTML(ST.me, 'md')}
+          </div>
           <div>
             <div style="font-size:16px;font-weight:800;color:var(--kr-txt)">Hello, ${esc(userLabel(ST.me).split(' ')[0])}!</div>
-            <div style="font-size:12px;color:var(--kr-mut)">Arcade Level ${prof.level} · ${prof.xp} XP</div>
+            <div style="font-size:12px;color:var(--kr-mut)">${esc(handleFrom(ST.me))}</div>
           </div>
         </div>
-        <button class="btn sm" onclick="Nav.tab_('arcade')" style="height:32px;font-size:12.5px;padding:0 12px">
-          🎮 Play Arcade
+        <button class="btn sm" onclick="Nav.tab_('profile')" style="height:32px;font-size:12.5px;padding:0 12px;background:var(--kr-brand)">
+          👤 My Profile
         </button>
       </div>
 
@@ -5673,9 +5791,9 @@ function renderHome() {
           <div style="font-size:22px;margin-bottom:4px">💬</div>
           <div style="font-size:11.5px;font-weight:700">Messages</div>
         </button>
-        <button class="card" onclick="openGamerProfileModal()" style="padding:12px 6px;border-radius:14px;border:1px solid var(--kr-line);background:var(--kr-elev);cursor:pointer">
-          <div style="font-size:22px;margin-bottom:4px">🏆</div>
-          <div style="font-size:11.5px;font-weight:700">Stats</div>
+        <button class="card" onclick="openSwitchAccountModal()" style="padding:12px 6px;border-radius:14px;border:1px solid var(--kr-line);background:var(--kr-elev);cursor:pointer">
+          <div style="font-size:22px;margin-bottom:4px">👥</div>
+          <div style="font-size:11.5px;font-weight:700">Switch Acct</div>
         </button>
       </div>
 
@@ -5697,22 +5815,16 @@ function renderHome() {
         `}
       </div>
 
-      <!-- 4. ARCADE HIGHLIGHTS -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-weight:700;font-size:14px">Arcade Highlights</div>
-        <a style="font-size:12px;color:var(--kr-brand);cursor:pointer;font-weight:600" onclick="Nav.tab_('arcade')">All Games</a>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
-        <div class="arcade-card" onclick="ArcadeEngine.createRoom('ludo', 2)" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:16px;padding:14px;cursor:pointer">
-          <div style="font-size:26px;margin-bottom:6px">🎲</div>
-          <div style="font-weight:800;font-size:14px">Ludo Club</div>
-          <div style="font-size:11.5px;color:var(--kr-mut)">Classic 1v1 Race</div>
+      <!-- 4. PROFILE & ACCOUNT QUICK SHORTCUT -->
+      <div style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:18px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:24px">⚙️</div>
+          <div>
+            <div style="font-size:14px;font-weight:800">Account &amp; Profile</div>
+            <div style="font-size:12px;color:var(--kr-mut)">Manage profiles, theme, and security</div>
+          </div>
         </div>
-        <div class="arcade-card" onclick="ArcadeEngine.createRoom('chess', 2)" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:16px;padding:14px;cursor:pointer">
-          <div style="font-size:26px;margin-bottom:6px">♟️</div>
-          <div style="font-weight:800;font-size:14px">Speed Chess</div>
-          <div style="font-size:11.5px;color:var(--kr-mut)">Tactical Duel</div>
-        </div>
+        <button class="btn sm outline" onclick="Nav.tab_('profile')" style="font-size:12px;height:30px;padding:0 12px">Manage ›</button>
       </div>
 
       <!-- 5. TRENDING PULSE SPOTLIGHT -->
@@ -5748,7 +5860,7 @@ function renderHome() {
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
-            <span>Play 1 Arcade Match</span>
+            <span>Share a 24h Status Story</span>
             <span style="color:var(--kr-brand);font-weight:700">0 / 1</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
@@ -7290,1895 +7402,718 @@ function openMediaLightbox(url) {
 
 
 /* ==========================================================================
-   KLYRO ARCADE ECOSYSTEM & GAME ENGINES v2.0
-   Pillar: ENTERTAINMENT
-   Includes:
-     1. Architecture: GameDefinition abstraction & Room system
-     2. 5 Playable Real-Time Games:
-        - Ludo Club (Full 57-step track, safe stars, roll-6 exit, captures)
-        - Speed Chess (8x8 board, legal move validation, checks, timers, captures)
-        - Carrom Strike (Tabletop physics, angle aim, power bar, corner pockets, Queen)
-        - Snakes & Ladders (100-cell grid, animated dice, snakes, ladders)
-        - KLYRO Rush (Original reflex duel)
-     3. Gamer Profile & Progression: XP, Arcade Level, badges, match stats
-     4. Leaderboards: Global & Friends rankings
-     5. Achievements & Daily Missions
-     6. Tournament & Event Engine
-     7. Social Loop: Share Victory to Pulse / Send Challenge to Chat
+   KLYRO PROFILE & ACCOUNT MANAGER ENGINE
+   Complete Profile Section, Multi-Account Switching, & Secure Logout
    ========================================================================== */
 
-const ARCADE_GAMES = {
-  ludo: {
-    id: 'ludo',
-    name: 'Ludo Club',
-    tagline: 'Classic Tabletop Race',
-    icon: '🎲',
-    category: 'Board',
-    playerCounts: [2, 4],
-    duration: '5–10 min',
-    difficulty: 'Casual',
-    desc: 'Roll the dice, race all 4 tokens to home base, capture opponent tokens on normal cells, and claim victory.',
-    modes: ['Classic 1v1', '4-Player Battle', 'Private Room']
-  },
-  chess: {
-    id: 'chess',
-    name: 'Speed Chess',
-    tagline: 'Tactical Mind Duel',
-    icon: '♟️',
-    category: 'Strategy',
-    playerCounts: [2],
-    duration: '3–8 min',
-    difficulty: 'Competitive',
-    desc: 'Real-time chess with legal move enforcement, turn timers, check detection, and captured piece tray.',
-    modes: ['Standard 1v1', 'Casual Challenge', 'Private Room']
-  },
-  carrom: {
-    id: 'carrom',
-    name: 'Carrom Strike',
-    tagline: 'Tabletop Physics Challenge',
-    icon: '🎯',
-    category: 'Casual',
-    playerCounts: [2],
-    duration: '4–7 min',
-    difficulty: 'Skill',
-    desc: 'Position your striker on the baseline, aim the trajectory line, charge up power, and pocket White, Black, and Queen coins.',
-    modes: ['1v1 Match', 'Free Style', 'Private Room']
-  },
-  snakes: {
-    id: 'snakes',
-    name: 'Snakes & Ladders',
-    tagline: 'Climb or Slide',
-    icon: '🐍',
-    category: 'Casual',
-    playerCounts: [2, 4],
-    duration: '3–5 min',
-    difficulty: 'Casual',
-    desc: 'Roll the animated dice, climb high ladders, dodge treacherous snakes, and be the first to land on cell 100!',
-    modes: ['2 Players', '4 Players', 'Private Room']
-  },
-  rush: {
-    id: 'rush',
-    name: 'KLYRO Rush',
-    tagline: 'Original Reflex Duel',
-    icon: '⚡',
-    category: 'KLYRO Originals',
-    playerCounts: [2],
-    duration: '1–2 min',
-    difficulty: 'Reflex',
-    desc: 'Fast-paced original reaction duel! React to live on-screen cues faster than your rival to score combo points.',
-    modes: ['Fast 5-Round Duel', 'Private Challenge']
-  }
-};
-
-/* ==========================================================================
-   KLYRO AI OPPONENT SYSTEM v1.0
-   Architecture: Reusable AI engine with 5 difficulty profiles:
-     - Beginner, Easy, Normal, Hard, Expert
-   Supports: Ludo, Chess, Carrom, Snakes & Ladders, Rush
-   ========================================================================== */
-const KlyroAIPlayer = {
-  isThinking: false,
-
-  checkTurn(room) {
-    if (!room || room.status !== 'playing' || this.isThinking) return;
-    const curPlayer = room.players && room.players[room.turn];
-    if (!curPlayer || !curPlayer.isAi) return;
-
-    this.isThinking = true;
-    setTimeout(() => {
-      this.executeAITurn(room.gameType, room, curPlayer);
-    }, 850);
-  },
-
-  async executeAITurn(gameType, room, aiPlayer) {
-    try {
-      if (gameType === 'ludo') {
-        await this.playLudoTurn(room, aiPlayer);
-      } else if (gameType === 'chess') {
-        await this.playChessTurn(room, aiPlayer);
-      } else if (gameType === 'carrom') {
-        await this.playCarromTurn(room, aiPlayer);
-      } else if (gameType === 'snakes') {
-        await this.playSnakesTurn(room, aiPlayer);
-      } else if (gameType === 'rush') {
-        await this.playRushTurn(room, aiPlayer);
-      }
-    } catch (e) {
-      DBG('AI Turn execution error:', e);
-    } finally {
-      this.isThinking = false;
-    }
-  },
-
-  async playLudoTurn(room, aiPlayer) {
-    const dice = Math.floor(Math.random() * 6) + 1;
-    const color = aiPlayer.color;
-    const tokens = (room.state && room.state.tokens && room.state.tokens[color]) || [-1, -1, -1, -1];
-
-    const movable = [];
-    tokens.forEach((pos, idx) => {
-      if (pos === -1 && dice === 6) movable.push(idx);
-      else if (pos >= 0 && pos + dice <= 57) movable.push(idx);
-    });
-
-    const updates = {};
-    updates['state/diceValue'] = dice;
-    updates['lastActionAt'] = now();
-
-    if (movable.length === 0) {
-      updates['turn'] = ArcadeEngine.getNextTurn(room);
-      await db.ref('games/ludo/' + room.id).update(updates);
-    } else {
-      let bestIdx = movable[0];
-      for (const idx of movable) {
-        if (tokens[idx] === -1 && dice === 6) { bestIdx = idx; break; }
-        if (tokens[idx] + dice === 57) { bestIdx = idx; break; }
-      }
-      await db.ref('games/ludo/' + room.id).update(updates);
-      setTimeout(async () => {
-        await ArcadeEngine.executeLudoMoveForPlayer(room, aiPlayer.uid, bestIdx, dice);
-      }, 550);
-    }
-  },
-
-  async playChessTurn(room, aiPlayer) {
-    const board = (room.state && room.state.board) || [];
-    const aiColor = aiPlayer.color;
-    const legalMoves = ArcadeEngine.getAllLegalChessMoves(board, aiColor);
-
-    if (legalMoves.length === 0) {
-      await db.ref('games/chess/' + room.id).update({
-        status: 'ended',
-        winner: ArcadeEngine.getNextTurn(room)
-      });
-      return;
-    }
-
-    let bestMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
-    const pieceValues = { 'q': 9, 'Q': 9, 'r': 5, 'R': 5, 'b': 3, 'B': 3, 'n': 3, 'N': 3, 'p': 1, 'P': 1 };
-    let maxVal = -1;
-    for (const m of legalMoves) {
-      const target = board[m.toR][m.toC];
-      const val = pieceValues[target] || 0;
-      if (val > maxVal) {
-        maxVal = val;
-        bestMove = m;
-      }
-    }
-
-    await ArcadeEngine.executeChessMove(bestMove.fromR, bestMove.fromC, bestMove.toR, bestMove.toC, aiPlayer.uid);
-  },
-
-  async playCarromTurn(room, aiPlayer) {
-    const angle = 70 + Math.floor(Math.random() * 40);
-    const power = 65 + Math.floor(Math.random() * 25);
-    const coins = [...(room.state && room.state.coins || [])];
-    let scoredPts = 0;
-    const hitIdx = Math.floor(Math.random() * coins.length);
-
-    if (power > 50 && coins[hitIdx]) {
-      const pocketed = coins.splice(hitIdx, 1)[0];
-      scoredPts = pocketed.pts;
-    }
-
-    const curScore = (aiPlayer.score || 0) + scoredPts;
-    const updates = {};
-    updates['state/coins'] = coins;
-    updates[`players/${aiPlayer.uid}/score`] = curScore;
-    updates['lastActionAt'] = now();
-
-    if (coins.length === 0 || curScore >= 50) {
-      updates['status'] = 'ended';
-      updates['winner'] = aiPlayer.uid;
-    } else {
-      updates['turn'] = ArcadeEngine.getNextTurn(room);
-    }
-
-    await db.ref('games/carrom/' + room.id).update(updates);
-  },
-
-  async playSnakesTurn(room, aiPlayer) {
-    const dice = Math.floor(Math.random() * 6) + 1;
-    const curPos = (room.state && room.state.positions && room.state.positions[aiPlayer.uid]) || 1;
-    let nextPos = curPos + dice;
-    if (nextPos > 100) nextPos = curPos;
-
-    const snakesAndLadders = {
-      4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 51: 67, 63: 81, 71: 91,
-      17: 7, 54: 34, 62: 19, 64: 60, 87: 24, 93: 73, 95: 75, 98: 79
-    };
-    if (snakesAndLadders[nextPos]) nextPos = snakesAndLadders[nextPos];
-
-    const updates = {};
-    updates['state/diceValue'] = dice;
-    updates[`state/positions/${aiPlayer.uid}`] = nextPos;
-    updates['lastActionAt'] = now();
-
-    if (nextPos === 100) {
-      updates['status'] = 'ended';
-      updates['winner'] = aiPlayer.uid;
-    } else {
-      updates['turn'] = ArcadeEngine.getNextTurn(room);
-    }
-
-    await db.ref('games/snakes/' + room.id).update(updates);
-  },
-
-  async playRushTurn(room, aiPlayer) {
-    const scores = (room.state && room.state.scores) || {};
-    scores[aiPlayer.uid] = (scores[aiPlayer.uid] || 0) + (10 + Math.floor(Math.random() * 5));
-    const round = (room.state && room.state.round) || 1;
-
-    const updates = {};
-    updates['state/scores'] = scores;
-    if (round >= 5) {
-      updates['status'] = 'ended';
-      const maxScoreUid = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
-      updates['winner'] = maxScoreUid;
-    } else {
-      updates['state/round'] = round + 1;
-      const symbols = ['⚡', '🔥', '⭐', '💎', '🎯'];
-      updates['state/targetSymbol'] = symbols[Math.floor(Math.random() * symbols.length)];
-    }
-
-    await db.ref('games/rush/' + room.id).update(updates);
-  }
-};
-
-const ArcadeEngine = {
-  activeRoom: null,
-  activeGameType: null,
-  activeRoomId: null,
-  listenerSlot: null,
-  diceRolling: false,
-  timerInterval: null,
-  selectedDetailGame: null,
-  currentTab: 'all', // 'all' | 'board' | 'strategy' | 'casual' | 'originals' | 'tournaments' | 'leaderboards'
-
-  /* ---------------- Challenge Notification State ---------------- */
-  activeToastChallenge: null,
-  challengeCountdownTimer: null,
-  seenChallenges: new Set(),
-
-  init() {
-    this.activeRoom = null;
-    this.activeGameType = null;
-    this.initGamerProfile();
-    this.listenGameChallenges();
-  },
-
-  teardown() {
-    if (this.listenerSlot) {
-      unlisten(this.listenerSlot);
-      this.listenerSlot = null;
-    }
-    unlisten('gameChallenges');
-    this.hideChallengeToast();
-    clearInterval(this.timerInterval);
-    this.activeRoom = null;
-  },
-
-  /* ---------------- Gamer Profile & Progression ---------------- */
-  async initGamerProfile() {
-    if (!ST.me) return;
-    try {
-      const sn = await db.ref('gamerProfiles/' + ST.me.uid).once('value');
-      let p = sn.val();
-      if (!p) {
-        p = {
-          uid: ST.me.uid,
-          name: ST.me.name || 'Player',
-          username: ST.me.username || 'user',
-          xp: 150,
-          level: 2,
-          totalMatches: 0,
-          totalWins: 0,
-          streak: 0,
-          badges: ['arcade_rookie'],
-          achievements: { first_join: now() },
-          stats: {
-            ludo: { matches: 0, wins: 0 },
-            chess: { matches: 0, wins: 0, rating: 1200 },
-            carrom: { matches: 0, wins: 0, highScore: 0 },
-            snakes: { matches: 0, wins: 0 },
-            rush: { matches: 0, wins: 0 }
-          }
-        };
-        await db.ref('gamerProfiles/' + ST.me.uid).set(p);
-      }
-      ST.gamerProfile = p;
-    } catch (e) {
-      ST.gamerProfile = { xp: 150, level: 2, totalMatches: 0, totalWins: 0, streak: 0, badges: ['arcade_rookie'], stats: {} };
-    }
-  },
-
-  calculateLevel(xp) {
-    return Math.floor(Math.sqrt((xp || 0) / 80)) + 1;
-  },
-
-  async awardMatchOutcome(gameType, isWinner) {
-    if (!ST.me || !ST.gamerProfile) return;
-    const p = ST.gamerProfile;
-    const gainedXp = isWinner ? 120 : 40;
-    p.xp = (p.xp || 0) + gainedXp;
-    p.level = this.calculateLevel(p.xp);
-    p.totalMatches = (p.totalMatches || 0) + 1;
-    if (isWinner) {
-      p.totalWins = (p.totalWins || 0) + 1;
-      p.streak = (p.streak || 0) + 1;
-    } else {
-      p.streak = 0;
-    }
-
-    if (!p.stats) p.stats = {};
-    if (!p.stats[gameType]) p.stats[gameType] = { matches: 0, wins: 0 };
-    p.stats[gameType].matches = (p.stats[gameType].matches || 0) + 1;
-    if (isWinner) p.stats[gameType].wins = (p.stats[gameType].wins || 0) + 1;
-
-    // Check achievements
-    if (!p.achievements) p.achievements = {};
-    if (isWinner && !p.achievements.first_win) {
-      p.achievements.first_win = now();
-      toast('🏆 Achievement Unlocked: First Victory!');
-    }
-    if (p.totalWins >= 5 && !p.achievements.five_wins) {
-      p.achievements.five_wins = now();
-      toast('🏆 Achievement Unlocked: 5 Wins Champion!');
-    }
-
-    try {
-      await db.ref('gamerProfiles/' + ST.me.uid).update(p);
-      // Update global leaderboard record
-      await db.ref('leaderboards/global/' + ST.me.uid).set({
-        uid: ST.me.uid,
-        name: ST.me.name || 'Player',
-        username: ST.me.username || 'user',
-        photo: ST.me.photo || '',
-        level: p.level,
-        xp: p.xp,
-        wins: p.totalWins,
-        lastActive: now()
-      });
-    } catch (e) {}
-  },
-
-  /* ---------------- Create Game Room ---------------- */
-  async createRoom(gameType, maxPlayers, isPrivate) {
-    if (!ST.me) return;
-    const roomId = 'klyro_' + Math.random().toString(36).slice(2, 8);
-    const hostColor = gameType === 'chess' ? 'white' : 'red';
-
-    const roomData = {
-      id: roomId,
-      gameType: gameType,
-      maxPlayers: maxPlayers || 2,
-      isPrivate: !!isPrivate,
-      status: 'waiting',
-      hostUid: ST.me.uid,
-      createdAt: now(),
-      lastActionAt: now(),
-      winner: null,
-      turn: ST.me.uid,
-      turnTimeLeft: 45,
-      players: {
-        [ST.me.uid]: {
-          uid: ST.me.uid,
-          name: ST.me.name || 'Player 1',
-          photo: ST.me.photo || '',
-          color: hostColor,
-          ready: true,
-          score: 0,
-          joinedAt: now()
-        }
-      },
-      state: this.getInitialState(gameType, maxPlayers)
-    };
-
-    await db.ref('games/' + gameType + '/' + roomId).set(roomData);
-    this.openRoom(gameType, roomId);
-    return roomId;
-  },
-
-  /* ---------------- Join Game Room ---------------- */
-  async joinRoom(gameType, roomId) {
-    if (!ST.me) return;
-    const roomRef = db.ref('games/' + gameType + '/' + roomId);
-    const sn = await roomRef.once('value');
-    const room = sn.val();
-
-    if (!room) {
-      toast('Game room not found or match has ended.');
-      return;
-    }
-
-    const currentPlayers = room.players || {};
-    const pCount = Object.keys(currentPlayers).length;
-
-    if (currentPlayers[ST.me.uid]) {
-      this.openRoom(gameType, roomId);
-      return;
-    }
-
-    if (pCount >= (room.maxPlayers || 2)) {
-      toast('This match is already full.');
-      return;
-    }
-
-    let newColor = 'green';
-    if (gameType === 'chess') {
-      const hostP = currentPlayers[room.hostUid] || Object.values(currentPlayers)[0];
-      newColor = (hostP && hostP.color === 'white') ? 'black' : 'white';
-    } else if (gameType === 'ludo') {
-      const colors = ['red', 'green', 'yellow', 'blue'];
-      const used = Object.values(currentPlayers).map(p => p.color);
-      newColor = colors.find(c => !used.includes(c)) || 'green';
-    }
-
-    const newPlayer = {
-      uid: ST.me.uid,
-      name: ST.me.name || 'Player ' + (pCount + 1),
-      photo: ST.me.photo || '',
-      color: newColor,
-      ready: true,
-      score: 0,
-      joinedAt: now()
-    };
-
-    const updates = {};
-    updates['players/' + ST.me.uid] = newPlayer;
-
-    if (pCount + 1 >= (room.maxPlayers || 2)) {
-      updates['status'] = 'playing';
-      updates['turn'] = room.hostUid;
-      updates['lastActionAt'] = now();
-    }
-
-    await roomRef.update(updates);
-    this.openRoom(gameType, roomId);
-  },
-
-  /* ---------------- Initial State Generator ---------------- */
-  getInitialState(gameType, maxPlayers) {
-    if (gameType === 'ludo') {
-      return {
-        diceValue: 6,
-        tokens: {
-          red: [-1, -1, -1, -1],
-          green: [-1, -1, -1, -1],
-          yellow: [-1, -1, -1, -1],
-          blue: [-1, -1, -1, -1]
-        },
-        hasExtraRoll: false
-      };
-    } else if (gameType === 'chess') {
-      return {
-        board: [
-          ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
-          ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-          ['.', '.', '.', '.', '.', '.', '.', '.'],
-          ['.', '.', '.', '.', '.', '.', '.', '.'],
-          ['.', '.', '.', '.', '.', '.', '.', '.'],
-          ['.', '.', '.', '.', '.', '.', '.', '.'],
-          ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-          ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
-        ],
-        captured: { white: [], black: [] },
-        inCheck: false
-      };
-    } else if (gameType === 'carrom') {
-      return {
-        coins: [
-          { id: 'q', type: 'queen', x: 150, y: 150, pts: 25 },
-          { id: 'w1', type: 'white', x: 135, y: 150, pts: 10 },
-          { id: 'w2', type: 'white', x: 165, y: 150, pts: 10 },
-          { id: 'w3', type: 'white', x: 150, y: 135, pts: 10 },
-          { id: 'w4', type: 'white', x: 150, y: 165, pts: 10 },
-          { id: 'b1', type: 'black', x: 139, y: 139, pts: 5 },
-          { id: 'b2', type: 'black', x: 161, y: 139, pts: 5 },
-          { id: 'b3', type: 'black', x: 139, y: 161, pts: 5 },
-          { id: 'b4', type: 'black', x: 161, y: 161, pts: 5 }
-        ],
-        striker: { x: 150, y: 260 },
-        power: 70,
-        angle: 90
-      };
-    } else if (gameType === 'snakes') {
-      return {
-        diceValue: 1,
-        positions: {
-          [ST.me ? ST.me.uid : 'player1']: 1
-        }
-      };
-    } else if (gameType === 'rush') {
-      return {
-        round: 1,
-        maxRounds: 5,
-        targetSymbol: '⚡',
-        targetColor: '#2563EB',
-        scores: {}
-      };
-    }
-    return {};
-  },
-
-  /* ---------------- Open Active Game Room ---------------- */
-  openRoom(gameType, roomId) {
-    this.activeGameType = gameType;
-    this.activeRoomId = roomId;
-    this.listenerSlot = 'arcade:room:' + roomId;
-
-    listen(this.listenerSlot, 'games/' + gameType + '/' + roomId, 'value', sn => {
-      const room = sn.val();
-      if (!room) {
-        toast('Game room closed.');
-        Nav.back('main');
-        return;
-      }
-      this.activeRoom = room;
-      renderActiveGame(room);
-
-      // Trigger AI turn if applicable
-      if (room.status === 'playing' && typeof KlyroAIPlayer !== 'undefined') {
-        KlyroAIPlayer.checkTurn(room);
-      }
-    });
-
-    // Update dedicated full-screen page header
-    const gDef = ARCADE_GAMES[gameType] || { name: 'Arcade Arena', icon: '🎮' };
-    const titleEl = s('arcade-game-title');
-    if (titleEl) titleEl.textContent = gDef.name;
-    const subEl = s('arcade-game-subtitle');
-    if (subEl) subEl.textContent = `${gDef.category} · Room ${roomId.slice(-6)}`;
-    const iconEl = s('arcade-game-icon');
-    if (iconEl) iconEl.textContent = gDef.icon;
-
-    Nav.go('arcade-game');
-  },
-
-  confirmLeaveGame() {
-    if (!this.activeRoom) {
-      Nav.back('main');
-      return;
-    }
-    confirmSheet('Leave Match?', 'Are you sure you want to forfeit or leave this match?', 'Leave Match', () => {
-      this.leaveRoom();
-    }, true);
-  },
-
-  async leaveRoom() {
-    if (!this.activeRoom || !ST.me) {
-      Nav.back('main');
-      return;
-    }
-    const r = this.activeRoom;
-    const ref = db.ref('games/' + r.gameType + '/' + r.id);
-
-    if (r.hostUid === ST.me.uid && (r.status === 'waiting' || r.isSolo)) {
-      await ref.remove().catch(() => {});
-    } else {
-      await ref.child('players/' + ST.me.uid).remove().catch(() => {});
-    }
-
-    this.teardown();
-    Nav.back('main');
-    toast('Left the game room.');
-  },
-
-  /* ---------------- Solo Play vs AI System ---------------- */
-  async startSoloGame(gameType, options = {}) {
-    if (!ST.me) return;
-    const difficulty = options.difficulty || 'normal';
-    const aiCount = options.aiCount || 1;
-    const maxPlayers = aiCount + 1;
-    const roomId = 'solo_' + Math.random().toString(36).slice(2, 8);
-    const hostColor = gameType === 'chess' ? 'white' : 'red';
-
-    const colors = gameType === 'chess' ? ['white', 'black'] : ['red', 'green', 'yellow', 'blue'];
-    const diffLabels = { beginner: 'Beginner', easy: 'Easy', normal: 'Normal', hard: 'Hard', expert: 'Expert' };
-
-    const players = {
-      [ST.me.uid]: {
-        uid: ST.me.uid,
-        name: ST.me.name || 'You',
-        photo: ST.me.photo || '',
-        color: hostColor,
-        isAi: false,
-        ready: true,
-        score: 0,
-        joinedAt: now()
-      }
-    };
-
-    for (let i = 1; i <= aiCount; i++) {
-      const aiUid = `ai_bot_${i}`;
-      const color = colors[i] || 'green';
-      players[aiUid] = {
-        uid: aiUid,
-        name: `Bot ${i} (${diffLabels[difficulty] || 'AI'})`,
-        photo: '',
-        color: color,
-        isAi: true,
-        difficulty: difficulty,
-        ready: true,
-        score: 0,
-        joinedAt: now()
-      };
-    }
-
-    const roomData = {
-      id: roomId,
-      gameType: gameType,
-      maxPlayers: maxPlayers,
-      isPrivate: true,
-      isSolo: true,
-      difficulty: difficulty,
-      status: 'playing',
-      hostUid: ST.me.uid,
-      createdAt: now(),
-      lastActionAt: now(),
-      winner: null,
-      turn: ST.me.uid,
-      turnTimeLeft: 45,
-      players: players,
-      state: this.getInitialState(gameType, maxPlayers)
-    };
-
-    await db.ref('games/' + gameType + '/' + roomId).set(roomData);
-    this.openRoom(gameType, roomId);
-  },
-
-  async rematch(room) {
-    if (!room) return;
-    if (room.isSolo) {
-      this.startSoloGame(room.gameType, { difficulty: room.difficulty, aiCount: (room.maxPlayers || 2) - 1 });
-    } else {
-      this.createRoom(room.gameType, room.maxPlayers || 2);
-    }
-  },
-
-  toggleAudio() {
-    this.soundEnabled = this.soundEnabled === false ? true : false;
-    const btn = s('btn-arcade-sound');
-    if (btn) btn.textContent = this.soundEnabled ? '🔊' : '🔇';
-    toast(this.soundEnabled ? 'Game audio enabled' : 'Game audio muted');
-  },
-
-  showGameRules() {
-    if (!this.activeGameType) return;
-    const g = ARCADE_GAMES[this.activeGameType] || { name: 'Arcade Match', desc: 'Enjoy playing!' };
-    openModal(`
-      <div class="pad">
-        <h3 style="margin:0 0 8px">${g.icon} ${esc(g.name)} Rules</h3>
-        <p style="font-size:13.5px;color:var(--kr-mut);line-height:1.5;margin-bottom:14px">${esc(g.desc)}</p>
-        <div style="font-size:13px;line-height:1.6;background:var(--kr-bg2);padding:12px;border-radius:12px;margin-bottom:16px">
-          ${this.activeGameType === 'ludo' ? `
-            • Roll a <b>6</b> to release tokens from home base onto the track.<br>
-            • Land on opponent tokens to capture them and send them back!<br>
-            • Safe cells (⭐) protect your pieces from capture.<br>
-            • Rolling a 6 or capturing grants an extra turn.<br>
-            • First player to bring all 4 tokens home wins!
-          ` : this.activeGameType === 'chess' ? `
-            • Standard international chess rules apply.<br>
-            • Select a piece to see its legal destinations.<br>
-            • Defend your King against checks and deliver checkmate.<br>
-            • Turn timer is 45 seconds per move.
-          ` : this.activeGameType === 'carrom' ? `
-            • Place striker on the baseline.<br>
-            • Adjust aim angle and power charge.<br>
-            • Pocket White (10 pts), Black (5 pts), or Queen (25 pts).<br>
-            • Highest score when coins are cleared wins!
-          ` : this.activeGameType === 'snakes' ? `
-            • Roll the dice to advance across the 100 cells.<br>
-            • Ladders climb you up; snakes slide you back down.<br>
-            • First to land on cell 100 wins!
-          ` : `
-            • Tap the target symbol as fast as possible when it appears.<br>
-            • 5 rounds of high-speed reflex testing.
-          `}
-        </div>
-        <button class="btn block ghost" onclick="Nav.close('ov-modal')">Close</button>
-      </div>
-    `);
-  },
-
-  /* ---------------- LUDO RULES ENGINE ---------------- */
-  async rollLudoDice() {
-    if (!this.activeRoom || this.diceRolling) return;
-    const r = this.activeRoom;
-    if (r.turn !== ST.me.uid) {
-      toast("It's not your turn!");
-      return;
-    }
-
-    this.diceRolling = true;
-    const diceEl = s('ludo-dice-btn');
-    if (diceEl) diceEl.classList.add('rolling');
-
-    setTimeout(async () => {
-      const dice = Math.floor(Math.random() * 6) + 1;
-      this.diceRolling = false;
-      if (diceEl) diceEl.classList.remove('rolling');
-
-      const myPlayer = r.players[ST.me.uid];
-      const myColor = myPlayer.color;
-      const tokens = (r.state && r.state.tokens && r.state.tokens[myColor]) || [-1, -1, -1, -1];
-
-      // Safe star positions on common path (positions 0 to 51)
-      const safeStars = [0, 8, 13, 21, 26, 34, 39, 47];
-
-      // Compute legal moves
-      const movableIndices = [];
-      tokens.forEach((pos, idx) => {
-        if (pos === -1 && dice === 6) movableIndices.push(idx);
-        else if (pos >= 0 && pos + dice <= 57) movableIndices.push(idx);
-      });
-
-      const updates = {};
-      updates['state/diceValue'] = dice;
-      updates['lastActionAt'] = now();
-
-      if (movableIndices.length === 0) {
-        updates['turn'] = this.getNextTurn(r);
-        toast(`Rolled a ${dice}. No legal moves!`);
-      } else if (movableIndices.length === 1) {
-        this.executeLudoMove(movableIndices[0], dice);
-        return;
-      } else {
-        toast(`Rolled a ${dice}! Tap a piece to advance.`);
-      }
-
-      await db.ref('games/ludo/' + r.id).update(updates);
-    }, 450);
-  },
-
-  async executeLudoMoveForPlayer(r, playerUid, tokenIdx, diceVal) {
-    if (!r) return;
-    const player = r.players[playerUid];
-    if (!player) return;
-    const color = player.color;
-    const tokens = [...((r.state.tokens && r.state.tokens[color]) || [-1, -1, -1, -1])];
-    const curPos = tokens[tokenIdx];
-    const dice = diceVal || r.state.diceValue || 1;
-
-    let newPos = curPos;
-    if (curPos === -1 && dice === 6) {
-      newPos = 0; // Exit yard onto track
-    } else if (curPos >= 0 && curPos + dice <= 57) {
-      newPos = curPos + dice;
-    } else {
-      return;
-    }
-
-    tokens[tokenIdx] = newPos;
-
-    // Check for captures on common track (0 to 51)
-    const safeStars = [0, 8, 13, 21, 26, 34, 39, 47];
-    let capturedPiece = false;
-    const allTokens = Object.assign({}, r.state.tokens || {});
-
-    if (newPos < 52 && !safeStars.includes(newPos)) {
-      Object.keys(allTokens).forEach(c => {
-        if (c !== color) {
-          const enemyTokens = [...allTokens[c]];
-          enemyTokens.forEach((ePos, eIdx) => {
-            if (ePos === newPos) {
-              enemyTokens[eIdx] = -1; // Send back to home base!
-              capturedPiece = true;
-              allTokens[c] = enemyTokens;
-              if (playerUid === ST.me.uid) toast(`💥 Captured enemy token!`);
-            }
-          });
-        }
-      });
-    }
-
-    allTokens[color] = tokens;
-
-    const updates = {};
-    updates['state/tokens'] = allTokens;
-    updates['lastActionAt'] = now();
-
-    // Check victory: all 4 tokens reached home (57)
-    if (tokens.every(p => p === 57)) {
-      updates['status'] = 'ended';
-      updates['winner'] = playerUid;
-      if (playerUid === ST.me.uid) {
-        this.awardMatchOutcome('ludo', true);
-        toast('🎉 VICTORY! You won the Ludo match!');
-      } else {
-        this.awardMatchOutcome('ludo', false);
-        toast(`${player.name} claimed victory!`);
-      }
-    } else {
-      // Extra turn on rolling 6 OR capturing enemy piece!
-      if (dice === 6 || capturedPiece) {
-        if (playerUid === ST.me.uid) toast(dice === 6 ? 'Rolled a 6! Roll again!' : 'Captured piece! Extra turn!');
-      } else {
-        updates['turn'] = this.getNextTurn(r);
-      }
-    }
-
-    await db.ref('games/ludo/' + r.id).update(updates);
-  },
-
-  async executeLudoMove(tokenIdx, diceVal) {
-    if (!this.activeRoom || this.activeRoom.turn !== ST.me.uid) return;
-    await this.executeLudoMoveForPlayer(this.activeRoom, ST.me.uid, tokenIdx, diceVal);
-  },
-
-  /* ---------------- CHESS ENGINE ---------------- */
-  async executeChessMove(fromR, fromC, toR, toC, playerUid) {
-    const r = this.activeRoom;
-    if (!r) return;
-    const actorUid = playerUid || r.turn;
-    const curPlayer = r.players[actorUid];
-    if (!curPlayer) return;
-
-    const board = r.state.board.map(row => [...row]);
-    const piece = board[fromR][fromC];
-
-    const isWhite = piece === piece.toUpperCase();
-    if ((curPlayer.color === 'white' && !isWhite) || (curPlayer.color === 'black' && isWhite)) {
-      if (actorUid === ST.me.uid) toast("That's not your piece!");
-      return;
-    }
-
-    const captured = board[toR][toC];
-    board[toR][toC] = piece;
-    board[fromR][fromC] = '.';
-
-    const updates = {};
-    updates['state/board'] = board;
-    updates['lastActionAt'] = now();
-
-    if (captured === 'k' || captured === 'K') {
-      updates['status'] = 'ended';
-      updates['winner'] = actorUid;
-      if (actorUid === ST.me.uid) {
-        this.awardMatchOutcome('chess', true);
-        toast('🏆 Checkmate! You won the chess match!');
-      } else {
-        this.awardMatchOutcome('chess', false);
-        toast('Opponent won by checkmate.');
-      }
-    } else {
-      updates['turn'] = this.getNextTurn(r);
-    }
-
-    await db.ref('games/chess/' + r.id).update(updates);
-  },
-
-  getAllLegalChessMoves(board, color) {
-    const moves = [];
-    const isWhite = color === 'white';
-    for (let r = 0; r < 8; r++) {
-      for (let c = 0; c < 8; c++) {
-        const p = board[r][c];
-        if (!p || p === '.') continue;
-        const pIsWhite = p === p.toUpperCase();
-        if (pIsWhite !== isWhite) continue;
-
-        const pLower = p.toLowerCase();
-        if (pLower === 'p') {
-          const dir = isWhite ? -1 : 1;
-          const startRow = isWhite ? 6 : 1;
-          if (r + dir >= 0 && r + dir < 8 && board[r + dir][c] === '.') {
-            moves.push({ fromR: r, fromC: c, toR: r + dir, toC: c });
-            if (r === startRow && board[r + 2 * dir][c] === '.') {
-              moves.push({ fromR: r, fromC: c, toR: r + 2 * dir, toC: c });
-            }
-          }
-          [-1, 1].forEach(dc => {
-            if (c + dc >= 0 && c + dc < 8 && r + dir >= 0 && r + dir < 8) {
-              const target = board[r + dir][c + dc];
-              if (target !== '.' && (target === target.toUpperCase()) !== isWhite) {
-                moves.push({ fromR: r, fromC: c, toR: r + dir, toC: c + dc });
-              }
-            }
-          });
-        } else if (pLower === 'n') {
-          const offsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-          offsets.forEach(([dr, dc]) => {
-            const nr = r + dr, nc = c + dc;
-            if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
-              const target = board[nr][nc];
-              if (target === '.' || (target === target.toUpperCase()) !== isWhite) {
-                moves.push({ fromR: r, fromC: c, toR: nr, toC: nc });
-              }
-            }
-          });
-        } else if (pLower === 'k') {
-          const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-          dirs.forEach(([dr, dc]) => {
-            const nr = r + dr, nc = c + dc;
-            if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
-              const target = board[nr][nc];
-              if (target === '.' || (target === target.toUpperCase()) !== isWhite) {
-                moves.push({ fromR: r, fromC: c, toR: nr, toC: nc });
-              }
-            }
-          });
-        } else {
-          const dirs = [];
-          if (pLower === 'r' || pLower === 'q') dirs.push([-1,0],[1,0],[0,-1],[0,1]);
-          if (pLower === 'b' || pLower === 'q') dirs.push([-1,-1],[-1,1],[1,-1],[1,1]);
-          dirs.forEach(([dr, dc]) => {
-            let nr = r + dr, nc = c + dc;
-            while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) {
-              const target = board[nr][nc];
-              if (target === '.') {
-                moves.push({ fromR: r, fromC: c, toR: nr, toC: nc });
-              } else {
-                if ((target === target.toUpperCase()) !== isWhite) {
-                  moves.push({ fromR: r, fromC: c, toR: nr, toC: nc });
-                }
-                break;
-              }
-              nr += dr; nc += dc;
-            }
-          });
-        }
-      }
-    }
-    return moves;
-  },
-
-  /* ---------------- CARROM ENGINE ---------------- */
-  async strikeCarrom(angle, power) {
-    const r = this.activeRoom;
-    if (!r || r.turn !== ST.me.uid) return;
-
-    const coins = [...(r.state.coins || [])];
-    let scoredPts = 0;
-    const hitIdx = Math.floor(Math.random() * coins.length);
-
-    if (power > 50 && coins[hitIdx]) {
-      const pocketed = coins.splice(hitIdx, 1)[0];
-      scoredPts = pocketed.pts;
-      toast(`🎯 Pocketed ${pocketed.type} coin! +${scoredPts} pts`);
-    }
-
-    const myPlayer = r.players[ST.me.uid];
-    const newScore = (myPlayer.score || 0) + scoredPts;
-
-    const updates = {};
-    updates['state/coins'] = coins;
-    updates[`players/${ST.me.uid}/score`] = newScore;
-    updates['lastActionAt'] = now();
-
-    if (coins.length === 0 || newScore >= 50) {
-      updates['status'] = 'ended';
-      updates['winner'] = ST.me.uid;
-      this.awardMatchOutcome('carrom', true);
-      toast('🏆 Champion! You won the Carrom match!');
-    } else {
-      updates['turn'] = this.getNextTurn(r);
-    }
-
-    await db.ref('games/carrom/' + r.id).update(updates);
-  },
-
-  /* ---------------- SNAKES & LADDERS ENGINE ---------------- */
-  async rollSnakesDice() {
-    const r = this.activeRoom;
-    if (!r || r.turn !== ST.me.uid) return;
-
-    const dice = Math.floor(Math.random() * 6) + 1;
-    const positions = Object.assign({}, r.state.positions || {});
-    let cur = positions[ST.me.uid] || 1;
-    let target = cur + dice;
-
-    if (target > 100) target = cur; // Must land exactly on 100
-
-    // Snakes map
-    const snakes = { 98: 28, 95: 56, 92: 51, 83: 19, 73: 1, 64: 36 };
-    // Ladders map
-    const ladders = { 4: 14, 9: 31, 20: 38, 28: 84, 40: 59, 63: 81, 71: 91 };
-
-    let msg = `Rolled a ${dice}! Moved to ${target}.`;
-    if (ladders[target]) {
-      target = ladders[target];
-      msg = `🪜 Climaned up a ladder to ${target}!`;
-    } else if (snakes[target]) {
-      target = snakes[target];
-      msg = `🐍 Slid down a snake to ${target}!`;
-    }
-
-    positions[ST.me.uid] = target;
-
-    const updates = {};
-    updates['state/positions'] = positions;
-    updates['state/diceValue'] = dice;
-    updates['lastActionAt'] = now();
-
-    if (target === 100) {
-      updates['status'] = 'ended';
-      updates['winner'] = ST.me.uid;
-      this.awardMatchOutcome('snakes', true);
-      toast('🎉 Reached 100! You won Snakes & Ladders!');
-    } else {
-      updates['turn'] = this.getNextTurn(r);
-      toast(msg);
-    }
-
-    await db.ref('games/snakes/' + r.id).update(updates);
-  },
-
-  /* ---------------- KLYRO RUSH (ORIGINAL REFLEX DUEL) ---------------- */
-  async tapRushTarget() {
-    const r = this.activeRoom;
-    if (!r || r.status !== 'playing') return;
-
-    const scores = Object.assign({}, r.state.scores || {});
-    scores[ST.me.uid] = (scores[ST.me.uid] || 0) + 100;
-
-    const curRound = r.state.round || 1;
-    const updates = {};
-    updates['state/scores'] = scores;
-
-    if (curRound >= 5) {
-      updates['status'] = 'ended';
-      // Determine highest score
-      let maxScore = -1, winnerUid = ST.me.uid;
-      Object.keys(scores).forEach(u => {
-        if (scores[u] > maxScore) { maxScore = scores[u]; winnerUid = u; }
-      });
-      updates['winner'] = winnerUid;
-      this.awardMatchOutcome('rush', winnerUid === ST.me.uid);
-      toast('⚡ Duel finished! High score: ' + maxScore);
-    } else {
-      const symbols = ['⚡', '💎', '🔥', '🎯', '🚀', '🌟'];
-      updates['state/round'] = curRound + 1;
-      updates['state/targetSymbol'] = symbols[Math.floor(Math.random() * symbols.length)];
-      updates['lastActionAt'] = now();
-      toast('+100 Quick Reflex Bonus!');
-    }
-
-    await db.ref('games/rush/' + r.id).update(updates);
-  },
-
-  getNextTurn(room) {
-    const uids = Object.keys(room.players || {});
-    const curIdx = uids.indexOf(room.turn);
-    const nextIdx = (curIdx + 1) % uids.length;
-    return uids[nextIdx] || room.hostUid;
-  },
-
-  /* ---------------- Non-Intrusive Direct Challenge Toast ---------------- */
-  showChallengeToast(challenge) {
-    if (!challenge) return;
-    const toastEl = s('game-challenge-toast');
-    if (!toastEl) return;
-
-    this.activeToastChallenge = challenge;
-    const gDef = ARCADE_GAMES[challenge.gameType] || { name: 'Arcade Match', icon: '🎮' };
-    const senderName = challenge.senderName || 'Friend';
-    const senderPhoto = challenge.senderPhoto || '';
-
-    // Update avatar
-    const imgEl = s('ct-avatar-img');
-    const fallbackEl = s('ct-avatar-fallback');
-    if (imgEl && fallbackEl) {
-      if (senderPhoto) {
-        imgEl.src = senderPhoto;
-        imgEl.style.display = 'block';
-        fallbackEl.style.display = 'none';
-      } else {
-        imgEl.style.display = 'none';
-        fallbackEl.style.display = 'flex';
-        fallbackEl.textContent = (typeof initials === 'function' ? initials(senderName) : '') || '🎮';
-      }
-    }
-
-    // Update badge icon
-    const badgeEl = s('ct-badge-icon');
-    if (badgeEl) badgeEl.textContent = gDef.icon || '🎮';
-
-    // Update texts
-    const titleEl = s('ct-title');
-    if (titleEl) titleEl.textContent = `Direct Challenge · ${gDef.name}`;
-
-    const descEl = s('ct-desc');
-    if (descEl) descEl.innerHTML = `<strong>${esc(senderName)}</strong> challenged you to <strong>${esc(gDef.name)}</strong>!`;
-
-    const noteEl = s('ct-note');
-    if (noteEl) noteEl.textContent = 'Tap Accept to jump straight into the lobby!';
-
-    // Wire buttons
-    const acceptBtn = s('ct-accept-btn');
-    if (acceptBtn) {
-      acceptBtn.onclick = (e) => {
-        e.stopPropagation();
-        this.hideChallengeToast();
-        this.acceptChallenge(challenge);
-      };
-    }
-
-    const closeBtn = s('ct-close-btn');
-    if (closeBtn) {
-      closeBtn.onclick = (e) => {
-        e.stopPropagation();
-        this.hideChallengeToast();
-        this.declineChallenge(challenge);
-      };
-    }
-
-    // Progress bar animation countdown (14 seconds)
-    const progressFill = s('ct-progress');
-    const totalMs = 14000;
-    const startTime = Date.now();
-    clearInterval(this.challengeCountdownTimer);
-
-    if (progressFill) {
-      progressFill.style.transform = 'scaleX(1)';
-    }
-
-    this.challengeCountdownTimer = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const remainingRatio = Math.max(0, 1 - (elapsed / totalMs));
-      if (progressFill) {
-        progressFill.style.transform = `scaleX(${remainingRatio})`;
-      }
-      if (remainingRatio <= 0) {
-        clearInterval(this.challengeCountdownTimer);
-        this.hideChallengeToast();
-      }
-    }, 100);
-
-    // Show toast smoothly
-    toastEl.classList.add('show');
-
-    // Friendly soft vibration / haptic feedback if permitted
-    try {
-      if (navigator && navigator.vibrate) navigator.vibrate([35, 45, 35]);
-    } catch (e) {}
-  },
-
-  hideChallengeToast() {
-    const toastEl = s('game-challenge-toast');
-    if (toastEl) toastEl.classList.remove('show');
-    clearInterval(this.challengeCountdownTimer);
-    this.challengeCountdownTimer = null;
-    this.activeToastChallenge = null;
-  },
-
-  async acceptChallenge(challenge) {
-    if (!challenge || !ST.me) return;
-    const gDef = ARCADE_GAMES[challenge.gameType] || { name: 'Arcade Match' };
-    toast(`Accepting challenge! Entering ${gDef.name} lobby…`, 2500);
-
-    // Update challenge in Firebase
-    if (challenge.id && !challenge.id.startsWith('demo-')) {
-      db.ref(`gameChallenges/${ST.me.uid}/${challenge.id}`).update({
-        status: 'accepted',
-        acceptedAt: now()
-      }).catch(() => {});
-    }
-
-    // Dismiss any open overlay modal
-    if (typeof Nav !== 'undefined') {
-      if (Nav.isOpen && Nav.isOpen('ov-modal')) Nav.close('ov-modal');
-    }
-
-    // Jump straight into the lobby
-    try {
-      await this.joinRoom(challenge.gameType, challenge.roomId);
-    } catch (err) {
-      DBG('Error joining challenged game room:', err);
-      toast('Could not join match — room may have expired.');
-    }
-  },
-
-  declineChallenge(challenge) {
-    if (!challenge || !ST.me) return;
-    if (challenge.id && !challenge.id.startsWith('demo-')) {
-      db.ref(`gameChallenges/${ST.me.uid}/${challenge.id}`).update({
-        status: 'declined',
-        declinedAt: now()
-      }).catch(() => {});
-    }
-  },
-
-  listenGameChallenges() {
-    if (!ST.me) return;
-    this.seenChallenges = this.seenChallenges || new Set();
-
-    listen('gameChallenges', 'gameChallenges/' + ST.me.uid, 'value', sn => {
-      const list = sn.val() || {};
-      const nowTs = now();
-      Object.keys(list).forEach(cid => {
-        const ch = list[cid];
-        if (!ch) return;
-        ch.id = cid;
-
-        // Challenge must be pending, not from myself, and recent (within 2 minutes)
-        const isPending = ch.status === 'pending';
-        const isFromOther = ch.senderUid && ch.senderUid !== ST.me.uid;
-        const isRecent = !ch.createdAt || (nowTs - ch.createdAt < 120000);
-
-        if (isPending && isFromOther && isRecent) {
-          if (!this.seenChallenges.has(cid)) {
-            this.seenChallenges.add(cid);
-            this.showChallengeToast(ch);
-          }
-        } else if (this.activeToastChallenge && this.activeToastChallenge.id === cid && ch.status !== 'pending') {
-          this.hideChallengeToast();
-        }
-      });
-    });
-  },
-
-  testChallengeToast(gameType = 'chess') {
-    const gDef = ARCADE_GAMES[gameType] || ARCADE_GAMES.chess;
-    this.showChallengeToast({
-      id: 'demo-' + now(),
-      roomId: 'demo-room-' + Math.floor(Math.random() * 1000),
-      gameType: gDef.id,
-      senderUid: 'demo_user',
-      senderName: 'Sarah Jenkins',
-      senderPhoto: '',
-      createdAt: now(),
-      status: 'pending'
-    });
-  },
-
-  /* ---------------- Social Challenge from Chat / Discover / Profile ---------------- */
-  async sendGameChallenge(gameType, opponentUid) {
-    if (!ST.me || !opponentUid) return;
-    const roomId = await this.createRoom(gameType, 2, true);
-    const gDef = ARCADE_GAMES[gameType];
-    const name = gDef ? gDef.name : 'Arcade Match';
-
-    // 1. Dispatch real-time challenge record to recipient's direct challenge queue
-    const challengeRef = db.ref('gameChallenges/' + opponentUid).push();
-    const challengeId = challengeRef.key;
-    const challengePayload = {
-      id: challengeId,
-      roomId: roomId,
-      gameType: gameType,
-      senderUid: ST.me.uid,
-      senderName: ST.me.name || 'Friend',
-      senderPhoto: ST.me.photo || '',
-      createdAt: now(),
-      status: 'pending'
-    };
-    await challengeRef.set(challengePayload);
-
-    // 2. Also send in-chat challenge bubble if chat exists
-    const challengeMsg = {
-      type: 'game_invite',
-      text: `🎮 Challenged you to ${name}!`,
-      gameType: gameType,
-      roomId: roomId,
-      hostName: ST.me.name,
-      challengeId: challengeId
-    };
-
-    if (ST.chat && (ST.chat.targetId === opponentUid || ST.chat.target === opponentUid || (ST.chat.chatId && ST.chat.chatId.includes(opponentUid)))) {
-      if (typeof pushMessage === 'function') {
-        await pushMessage(challengeMsg);
-      }
-    } else {
-      const cid = [ST.me.uid, opponentUid].sort().join('_');
-      db.ref('messages/' + cid).push(Object.assign({
-        sender: ST.me.uid,
-        ts: now(),
-        name: ST.me.name,
-        read: false
-      }, challengeMsg)).then(() => {
-        if (typeof bumpUnread === 'function') bumpUnread(opponentUid, cid);
-      }).catch(() => {});
-    }
-
-    toast(`Challenge sent to play ${name}!`);
-  },
-
-  /* ---------------- Share Match Outcome to Pulse ---------------- */
-  async shareVictoryToPulse(gameType) {
-    if (!ST.me) return;
-    const gDef = ARCADE_GAMES[gameType];
-    const name = gDef ? gDef.name : 'KLYRO Arcade';
-
-    const postPayload = {
-      text: `🏆 Just claimed victory in ${name} on KLYRO Arcade! Who's ready to challenge me next? #Arcade #Winner #KLYRO`,
-      type: 'text'
-    };
-
-    if (typeof PostsEngine !== 'undefined' && PostsEngine.createPost) {
+/**
+ * SessionVault
+ * Secure persistent session token storage.
+ * Stores cryptographically issued Firebase refresh tokens in local persistent storage.
+ * NEVER stores plaintext passwords in localStorage, IndexedDB, or memory.
+ */
+const SessionVault = {
+  /** Retrieves the active Firebase session object from IndexedDB or localStorage */
+  getStoredFirebaseSession() {
+    return new Promise(resolve => {
       try {
-        await PostsEngine.createPost(postPayload);
-        toast('Victory shared to KLYRO Pulse!');
+        const key = `firebase:authUser:${firebaseConfig.apiKey}:[DEFAULT]`;
+        if (typeof indexedDB === 'undefined') {
+          const raw = localStorage.getItem(key);
+          return resolve(raw ? JSON.parse(raw) : null);
+        }
+
+        const req = indexedDB.open('firebaseLocalStorageDb');
+        req.onsuccess = () => {
+          const idb = req.result;
+          if (!idb.objectStoreNames.contains('firebaseLocalStorage')) {
+            const raw = localStorage.getItem(key);
+            return resolve(raw ? JSON.parse(raw) : null);
+          }
+          const tx = idb.transaction('firebaseLocalStorage', 'readonly');
+          const store = tx.objectStore('firebaseLocalStorage');
+          const getReq = store.get(key);
+          getReq.onsuccess = () => {
+            if (getReq.result) resolve(getReq.result);
+            else {
+              const raw = localStorage.getItem(key);
+              resolve(raw ? JSON.parse(raw) : null);
+            }
+          };
+          getReq.onerror = () => {
+            const raw = localStorage.getItem(key);
+            resolve(raw ? JSON.parse(raw) : null);
+          };
+        };
+        req.onerror = () => {
+          const raw = localStorage.getItem(key);
+          resolve(raw ? JSON.parse(raw) : null);
+        };
       } catch (e) {
-        toast('Could not share victory');
+        resolve(null);
       }
+    });
+  },
+
+  /** Writes a session object into IndexedDB and localStorage for [DEFAULT] */
+  putStoredFirebaseSession(sessionRecord) {
+    return new Promise(resolve => {
+      try {
+        if (!sessionRecord) return resolve(false);
+        const key = `firebase:authUser:${firebaseConfig.apiKey}:[DEFAULT]`;
+
+        let payload = sessionRecord;
+        if (payload.fbase_key) payload.fbase_key = key;
+        if (payload.value) {
+          payload.value.appName = '[DEFAULT]';
+          try { localStorage.setItem(key, JSON.stringify(payload.value)); } catch (e) {}
+        } else {
+          try { localStorage.setItem(key, JSON.stringify(payload)); } catch (e) {}
+        }
+
+        if (typeof indexedDB === 'undefined') return resolve(true);
+
+        const req = indexedDB.open('firebaseLocalStorageDb');
+        req.onsuccess = () => {
+          const idb = req.result;
+          if (!idb.objectStoreNames.contains('firebaseLocalStorage')) return resolve(true);
+          const tx = idb.transaction('firebaseLocalStorage', 'readwrite');
+          const store = tx.objectStore('firebaseLocalStorage');
+          const putReq = store.put(payload);
+          putReq.onsuccess = () => resolve(true);
+          putReq.onerror = () => resolve(false);
+        };
+        req.onerror = () => resolve(false);
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  },
+
+  /** Save active account's token session locally under its uid */
+  async backup(uid) {
+    if (!uid) return;
+    try {
+      const sess = await this.getStoredFirebaseSession();
+      if (sess) {
+        localStorage.setItem('klyro_session_' + uid, JSON.stringify(sess));
+      }
+    } catch (e) {}
+  },
+
+  /** Restores target account's token session into [DEFAULT] */
+  async restore(uid) {
+    if (!uid) return false;
+    try {
+      const raw = localStorage.getItem('klyro_session_' + uid);
+      if (!raw) return false;
+      const sess = JSON.parse(raw);
+      await this.putStoredFirebaseSession(sess);
+      return true;
+    } catch (e) {
+      return false;
     }
+  },
+
+  /** Clear session for removed account */
+  remove(uid) {
+    try {
+      localStorage.removeItem('klyro_session_' + uid);
+    } catch (e) {}
   }
 };
 
-/* ---------------- Render Main Arcade Tab UI ---------------- */
-function renderArcade() {
-  const container = s('arcade-content');
-  if (!container) return;
+const AccountManager = {
+  STORAGE_KEY: 'klyro_saved_accounts',
 
-  const prof = ST.gamerProfile || { level: 1, xp: 0, totalWins: 0, totalMatches: 0, streak: 0 };
-  const currentTab = ArcadeEngine.currentTab || 'all';
+  /** Get all remembered accounts from local storage */
+  getSavedAccounts() {
+    try {
+      const data = localStorage.getItem(this.STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  },
 
-  container.innerHTML = `
-    <div style="padding:14px 14px 32px">
-      
-      <!-- HERO BANNER: ACTIVE EVENT -->
-      <div class="arcade-hero" style="background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;border-radius:22px;padding:22px 20px;margin-bottom:20px;box-shadow:0 10px 28px rgba(37,99,235,0.28);position:relative;overflow:hidden">
-        <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;opacity:0.9;margin-bottom:4px">⚡ KLYRO Arcade Season 1</div>
-        <h2 style="font-size:22px;font-weight:800;margin:0 0 6px">Arcade Masters Cup</h2>
-        <p style="font-size:13px;opacity:0.9;margin:0 0 16px;line-height:1.4">Play classic board games &amp; fast reflex duels with friends. Earn XP and climb the leaderboard.</p>
-        
-        <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);border-radius:14px;padding:10px 14px">
-          <div>
-            <div style="font-size:11px;opacity:0.85">Your Arcade Rank</div>
-            <div style="font-size:15px;font-weight:800">Level ${prof.level} · ${prof.xp} XP</div>
-          </div>
-          <button class="btn sm" onclick="openGamerProfileModal()" style="background:#fff;color:var(--kr-brand);font-weight:700;height:32px;padding:0 14px">
-            Gamer Profile
-          </button>
+  /** Save or update the active account in remembered accounts list */
+  saveActive(me) {
+    if (!me || !me.uid) return;
+    try {
+      const list = this.getSavedAccounts();
+      const existingIdx = list.findIndex(a => a.uid === me.uid);
+      const acc = {
+        uid: me.uid,
+        email: me.email || '',
+        name: me.name || me.username || 'User',
+        username: me.username || '',
+        photo: me.photo || '',
+        bio: me.bio || '',
+        lastActive: now()
+      };
+
+      if (existingIdx >= 0) {
+        list[existingIdx] = Object.assign(list[existingIdx], acc);
+      } else {
+        list.push(acc);
+      }
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+      // Asynchronously backup session token without passwords
+      SessionVault.backup(me.uid);
+    } catch (e) {
+      console.warn('[KLYRO] Could not save account to storage:', e);
+    }
+  },
+
+  /** Remove a saved account from this device */
+  removeAccount(uid) {
+    try {
+      let list = this.getSavedAccounts();
+      list = list.filter(a => a.uid !== uid);
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+      SessionVault.remove(uid);
+      toast('Account removed from this device');
+      if (typeof renderProfileSection === 'function') renderProfileSection();
+      this.renderSavedAccountsOnLogin();
+    } catch (e) {
+      console.warn('[KLYRO] Could not remove account:', e);
+    }
+  },
+
+  /** Switch to another remembered account without re-entering password */
+  async switchToAccount(targetUid) {
+    const list = this.getSavedAccounts();
+    const target = list.find(a => a.uid === targetUid);
+    if (!target) return;
+
+    if (ST.me && ST.me.uid === targetUid) {
+      toast('Already signed in as ' + (target.name || target.username));
+      return;
+    }
+
+    // Save current active account first
+    if (ST.me) {
+      this.saveActive(ST.me);
+      await SessionVault.backup(ST.me.uid);
+    }
+
+    confirmSheet(
+      'Switch Account',
+      `Switch to ${esc(target.name || target.username)}?`,
+      'Switch Now',
+      async () => {
+        Nav.closeAllOverlays();
+        toast('Switching account…');
+
+        // Gracefully clean up active session presence and listeners
+        try {
+          if (ST.me && ST.me.uid) {
+            await db.ref('users/' + ST.me.uid + '/online').set(false).catch(() => {});
+            await db.ref('users/' + ST.me.uid + '/lastSeen').set(now()).catch(() => {});
+          }
+        } catch (e) {}
+
+        Calls.end(true);
+        if (ST.mediaRec) Voice.cancel();
+        unlistenAll();
+        StatusEngine.teardown();
+        if (typeof PostsEngine !== 'undefined') PostsEngine.teardown();
+
+        ST.me = null;
+        ST.chat = null;
+        ST.chats = {};
+        ST.unread = {};
+
+        // Attempt instant token session restore without password
+        const hasSession = await SessionVault.restore(targetUid);
+
+        if (hasSession) {
+          // Show sleek loading transition and reboot with complete isolation
+          toast(`Switching to ${target.name}…`);
+          setTimeout(() => {
+            window.location.reload();
+          }, 350);
+          return;
+        }
+
+        // Fallback: If session token is not present or expired, prompt to re-authenticate
+        try { await auth.signOut(); } catch (e) {}
+        AuthState.set(AuthState.SIGNED_OUT);
+
+        setTimeout(() => {
+          const emailInp = s('login-email');
+          const passInp = s('login-password');
+          if (emailInp) {
+            emailInp.value = target.email || '';
+            if (passInp) passInp.focus();
+          }
+          toast(`Please re-authenticate for ${target.name || target.email}`);
+          this.renderSavedAccountsOnLogin();
+        }, 300);
+      }
+    );
+  },
+
+  /** Add or sign in to another account */
+  async addAnotherAccount() {
+    if (ST.me) {
+      this.saveActive(ST.me);
+      await SessionVault.backup(ST.me.uid);
+    }
+
+    confirmSheet(
+      'Add Another Account',
+      'Sign into or create a secondary account. Your current account will stay saved on this device so you can switch back anytime without re-entering your password.',
+      'Continue',
+      async () => {
+        Nav.closeAllOverlays();
+
+        try {
+          if (ST.me && ST.me.uid) {
+            await db.ref('users/' + ST.me.uid + '/online').set(false).catch(() => {});
+            await db.ref('users/' + ST.me.uid + '/lastSeen').set(now()).catch(() => {});
+          }
+        } catch (e) {}
+
+        Calls.end(true);
+        if (ST.mediaRec) Voice.cancel();
+        unlistenAll();
+        StatusEngine.teardown();
+        if (typeof PostsEngine !== 'undefined') PostsEngine.teardown();
+
+        ST.me = null;
+        ST.chat = null;
+
+        try { await auth.signOut(); } catch (e) {}
+
+        AuthState.set(AuthState.SIGNED_OUT);
+
+        setTimeout(() => {
+          const emailInp = s('login-email');
+          const passInp = s('login-password');
+          if (emailInp) emailInp.value = '';
+          if (passInp) passInp.value = '';
+          toast('Enter credentials for your new account');
+          this.renderSavedAccountsOnLogin();
+        }, 300);
+      }
+    );
+  },
+
+  /** Renders quick account picker chips on the login screen */
+  renderSavedAccountsOnLogin() {
+    const container = s('login-saved-accounts');
+    if (!container) return;
+
+    const list = this.getSavedAccounts();
+    if (!list || list.length === 0) {
+      container.innerHTML = '';
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'block';
+    container.innerHTML = `
+      <div style="margin-bottom:16px;background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:16px;padding:12px 14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:12px;font-weight:700;color:var(--kr-mut);text-transform:uppercase;letter-spacing:0.4px">Accounts on this device</span>
+          <span style="font-size:11px;color:var(--kr-brand);font-weight:600">${list.length} saved</span>
         </div>
-
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn sm" onclick="openChallengeFriendModal('ludo')" style="background:rgba(255,255,255,0.22);color:#fff;border:1px solid rgba(255,255,255,0.3);flex:1;justify-content:center;height:34px">
-            ⚔️ Challenge Friend
-          </button>
-          <button class="btn sm" onclick="ArcadeEngine.testChallengeToast('chess')" style="background:rgba(255,255,255,0.22);color:#fff;border:1px solid rgba(255,255,255,0.3);flex:1;justify-content:center;height:34px" title="Preview incoming game challenge toast notification">
-            🔔 Test Notification
-          </button>
-        </div>
-      </div>
-
-      <!-- ARCADE NAVIGATION FILTER -->
-      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;margin-bottom:14px;scrollbar-width:none">
-        <button class="seg-btn ${currentTab === 'all' ? 'active' : ''}" onclick="ArcadeEngine.currentTab='all';renderArcade()">All Games</button>
-        <button class="seg-btn ${currentTab === 'board' ? 'active' : ''}" onclick="ArcadeEngine.currentTab='board';renderArcade()">Board</button>
-        <button class="seg-btn ${currentTab === 'strategy' ? 'active' : ''}" onclick="ArcadeEngine.currentTab='strategy';renderArcade()">Strategy</button>
-        <button class="seg-btn ${currentTab === 'casual' ? 'active' : ''}" onclick="ArcadeEngine.currentTab='casual';renderArcade()">Casual</button>
-        <button class="seg-btn ${currentTab === 'originals' ? 'active' : ''}" onclick="ArcadeEngine.currentTab='originals';renderArcade()">Originals</button>
-        <button class="seg-btn ${currentTab === 'leaderboard' ? 'active' : ''}" onclick="ArcadeEngine.currentTab='leaderboard';renderArcade()">Leaderboard</button>
-      </div>
-
-      <!-- LEADERBOARD TAB VIEW -->
-      ${currentTab === 'leaderboard' ? `
-        <div class="card" style="padding:16px;border-radius:18px;margin-bottom:20px">
-          <h3 style="margin:0 0 12px;font-size:16px">Top KLYRO Champions</h3>
-          <div id="arcade-leaderboard-list">
-            <div class="row" style="padding:8px 0;border-bottom:1px solid var(--kr-line2)">
-              <div style="font-weight:800;font-size:16px;width:24px;color:#F59E0B">#1</div>
-              <div class="av sm" style="background:#2563EB">SY</div>
-              <div class="mid"><div class="t1"><b>Sihab</b></div><div class="t2">Level 6 · 540 XP</div></div>
-              <div style="font-weight:700;color:var(--kr-ok)">18 Wins</div>
-            </div>
-            <div class="row" style="padding:8px 0">
-              <div style="font-weight:800;font-size:16px;width:24px;color:var(--kr-mut)">#2</div>
-              <div class="av sm" style="background:#7C3AED">${esc(initials(ST.me ? ST.me.name : 'You'))}</div>
-              <div class="mid"><div class="t1"><b>${esc(ST.me ? ST.me.name : 'You')} (You)</b></div><div class="t2">Level ${prof.level} · ${prof.xp} XP</div></div>
-              <div style="font-weight:700;color:var(--kr-ok)">${prof.totalWins || 0} Wins</div>
-            </div>
-          </div>
-        </div>
-      ` : `
-        <!-- GAME LIBRARY GRID -->
-        <div class="arcade-grid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:14px;margin-bottom:24px">
-          ${Object.values(ARCADE_GAMES).filter(g => {
-            if (currentTab === 'board') return g.category === 'Board';
-            if (currentTab === 'strategy') return g.category === 'Strategy';
-            if (currentTab === 'casual') return g.category === 'Casual';
-            if (currentTab === 'originals') return g.category.includes('Original');
-            return true;
-          }).map(g => `
-            <div class="arcade-card" style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--kr-sh)">
-              <div style="display:flex;align-items:center;gap:14px">
-                <div style="width:52px;height:52px;border-radius:14px;background:var(--kr-bg2);display:flex;align-items:center;justify-content:center;font-size:26px">
-                  ${g.icon}
-                </div>
-                <div>
-                  <h4 style="margin:0;font-size:16px">${g.name}</h4>
-                  <div style="font-size:12px;color:var(--kr-mut)">${g.category} · ${g.duration}</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${list.map(acc => `
+            <div style="display:flex;align-items:center;justify-content:space-between;background:var(--kr-elev);border:1px solid var(--kr-line2);border-radius:12px;padding:8px 10px;cursor:pointer" onclick="AccountManager.selectSavedAccount('${esc(acc.uid)}')">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                ${safeMedia(acc.photo) ? `<img src="${esc(safeMedia(acc.photo))}" style="width:34px;height:34px;border-radius:50%;object-fit:cover" alt="">` : `<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">${esc(initials(acc.name))}</div>`}
+                <div style="min-width:0;overflow:hidden">
+                  <div style="font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(acc.name)}</div>
+                  <div style="font-size:11.5px;color:var(--kr-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(acc.email || ('@' + acc.username))}</div>
                 </div>
               </div>
-              <p style="font-size:13px;color:var(--kr-mut);margin:0;line-height:1.4">${g.desc}</p>
-              
-              <div style="display:flex;gap:6px;margin-top:auto">
-                <button class="btn sm" onclick="openSoloModal('${g.id}')" style="flex:1;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#fff;font-weight:700">
-                  🤖 Solo (AI)
-                </button>
-                <button class="btn sm outline" onclick="ArcadeEngine.createRoom('${g.id}', ${g.playerCounts[0]})" style="flex:1">
-                  👥 Match
-                </button>
-                <button class="btn sm ghost" onclick="openGameDetailModal('${g.id}')" style="padding:0 8px" title="Details">
-                  ℹ️
-                </button>
-              </div>
+              <button type="button" class="btn sm ghost" style="height:28px;font-size:12px;padding:0 8px;color:var(--kr-brand)" onclick="event.stopPropagation();AccountManager.selectSavedAccount('${esc(acc.uid)}')">Sign In ›</button>
             </div>
           `).join('')}
         </div>
-      `}
+      </div>
+    `;
+  },
 
-      <!-- ROOM CODE QUICK JOIN BAR -->
-      <div style="background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-        <div>
-          <div style="font-weight:700;font-size:14px">Join Private Room</div>
-          <div style="font-size:12px;color:var(--kr-mut)">Enter a 6-character room code</div>
+  /** Selects a remembered account in the login form */
+  selectSavedAccount(uid) {
+    const list = this.getSavedAccounts();
+    const acc = list.find(a => a.uid === uid);
+    if (!acc) return;
+
+    const emailInp = s('login-email');
+    const passInp = s('login-password');
+    if (emailInp) emailInp.value = acc.email || '';
+    if (passInp) passInp.focus();
+    toast(`Selected ${acc.name || acc.email} — enter password`);
+  }
+};
+
+/* ============================ PROFILE SECTION RENDERER ============================ */
+function renderProfileSection() {
+  const container = s('profile-content');
+  if (!container || !ST.me) return;
+
+  // Make sure active account is recorded in account manager
+  AccountManager.saveActive(ST.me);
+
+  const me = ST.me;
+  const savedAccounts = AccountManager.getSavedAccounts();
+  const otherAccounts = savedAccounts.filter(a => a.uid !== me.uid);
+  const st = settingsOf(me);
+  const pr = privacyOf(me);
+
+  // Compute live user stats
+  const chatCount = Object.keys(ST.chats || {}).length;
+  const friendCount = Object.values(ST.users || {}).filter(u => u && u.uid !== me.uid).length;
+  const postCount = Object.values(ST.posts || {}).filter(p => p && p.authorUid === me.uid).length;
+
+  container.innerHTML = `
+    <div style="max-width:540px;margin:0 auto;padding:16px 14px 48px">
+
+      <!-- 1. PROFILE HEADER CARD -->
+      <div style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:24px;padding:22px 18px;margin-bottom:18px;box-shadow:var(--kr-sh-1);position:relative;overflow:hidden">
+        <!-- Ambient subtle background banner -->
+        <div style="position:absolute;top:0;left:0;right:0;height:72px;background:linear-gradient(135deg, rgba(37,99,235,0.18), rgba(124,58,237,0.18));border-bottom:1px solid var(--kr-line2)"></div>
+
+        <div style="position:relative;display:flex;align-items:flex-end;justify-content:space-between;margin-top:20px;margin-bottom:14px">
+          <!-- Avatar with photo edit trigger -->
+          <div style="position:relative;cursor:pointer" onclick="openEditProfile()">
+            ${safeMedia(me.photo) ? `
+              <div class="av" style="width:78px;height:78px;border:3px solid var(--kr-elev);box-shadow:var(--kr-sh-2);border-radius:50%;overflow:hidden">
+                <img src="${esc(safeMedia(me.photo))}" alt="${esc(userLabel(me))}" style="width:100%;height:100%;object-fit:cover">
+              </div>
+            ` : getAvatarHTML(me, '', 'width:78px;height:78px;font-size:30px;border:3px solid var(--kr-elev);box-shadow:var(--kr-sh-2)')}
+            <div style="position:absolute;bottom:0;right:0;background:var(--kr-brand);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid var(--kr-elev)" title="Change Photo">
+              📷
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div style="display:flex;gap:8px">
+            <button class="btn sm outline" onclick="openEditProfile()" style="height:34px;padding:0 12px;border-radius:12px;font-size:12.5px;font-weight:600">
+              ✏️ Edit Profile
+            </button>
+            <button class="btn sm" onclick="openSwitchAccountModal()" style="height:34px;padding:0 12px;border-radius:12px;font-size:12.5px;font-weight:600;background:var(--kr-brand)">
+              👥 Switch Account
+            </button>
+          </div>
         </div>
-        <div style="display:flex;gap:6px">
-          <input class="inp" id="arcade-code-in" placeholder="room_code" style="max-width:130px;height:36px;font-size:13px">
-          <button class="btn sm" id="arcade-code-btn" style="height:36px">Join</button>
+
+        <!-- Name & Handle -->
+        <div style="margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <h2 style="font-size:20px;font-weight:800;letter-spacing:-0.4px;margin:0">${esc(userLabel(me))}</h2>
+            <span style="color:var(--kr-brand);font-size:16px" title="Verified Member">✓</span>
+          </div>
+          <div style="color:var(--kr-mut);font-size:13.5px;margin-top:2px">${esc(handleFrom(me))}</div>
         </div>
+
+        <!-- Bio / Status -->
+        <div style="background:var(--kr-bg2);border-radius:14px;padding:10px 14px;margin-bottom:14px;font-size:13.5px;color:var(--kr-txt);line-height:1.45;border:1px solid var(--kr-line2)">
+          ${esc(me.bio || me.statusText || 'No bio yet. Tap Edit Profile to add a status, bio, and personal details.')}
+        </div>
+
+        <!-- Meta details (Country, Email, Active Status) -->
+        <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--kr-mut)">
+          <span style="display:flex;align-items:center;gap:4px">📧 ${esc(me.email || 'Email verified')}</span>
+          ${me.country ? `<span style="display:flex;align-items:center;gap:4px">🌍 ${esc(me.country)}</span>` : ''}
+          <span style="display:flex;align-items:center;gap:4px">🟢 Active Now</span>
+        </div>
+      </div>
+
+      <!-- 2. MULTI-ACCOUNT SWITCHER CARD -->
+      <div style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:20px;padding:18px;margin-bottom:18px;box-shadow:var(--kr-sh-1)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-size:16px;font-weight:800;display:flex;align-items:center;gap:6px">
+              <span>👥 Switch Account</span>
+              <span class="pillx ok" style="font-size:11px">Multi-Account</span>
+            </div>
+            <div style="font-size:12.5px;color:var(--kr-mut);margin-top:2px">Manage and toggle accounts on this device</div>
+          </div>
+          <button class="btn sm ghost" onclick="AccountManager.addAnotherAccount()" style="font-size:12px;height:30px;padding:0 10px;color:var(--kr-brand);font-weight:700">
+            ＋ Add Account
+          </button>
+        </div>
+
+        <!-- Current active account item -->
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--kr-brand-soft);border:1.5px solid var(--kr-brand);border-radius:14px;padding:10px 14px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0">
+            ${safeMedia(me.photo) ? `<img src="${esc(safeMedia(me.photo))}" style="width:38px;height:38px;border-radius:50%;object-fit:cover" alt="">` : getAvatarHTML(me, 'sm')}
+            <div style="min-width:0;overflow:hidden">
+              <div style="font-weight:800;font-size:14px;display:flex;align-items:center;gap:6px">
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(userLabel(me))}</span>
+                <span style="background:var(--kr-brand);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px">ACTIVE</span>
+              </div>
+              <div style="font-size:12px;color:var(--kr-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(me.email || handleFrom(me))}</div>
+            </div>
+          </div>
+          <span style="font-size:12px;color:var(--kr-brand);font-weight:700">Current</span>
+        </div>
+
+        <!-- Other saved accounts on this device -->
+        ${otherAccounts.length ? `
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+            <div style="font-size:11.5px;font-weight:700;color:var(--kr-mut);text-transform:uppercase;letter-spacing:0.4px">Other Saved Accounts</div>
+            ${otherAccounts.map(acc => `
+              <div style="display:flex;align-items:center;justify-content:space-between;background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:14px;padding:10px 14px">
+                <div style="display:flex;align-items:center;gap:12px;min-width:0">
+                  ${safeMedia(acc.photo) ? `<img src="${esc(safeMedia(acc.photo))}" style="width:38px;height:38px;border-radius:50%;object-fit:cover" alt="">` : `<div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#64748B,#475569);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px">${esc(initials(acc.name))}</div>`}
+                  <div style="min-width:0;overflow:hidden">
+                    <div style="font-weight:750;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(acc.name)}</div>
+                    <div style="font-size:11.5px;color:var(--kr-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(acc.email || ('@' + acc.username))}</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <button class="btn sm" onclick="AccountManager.switchToAccount('${esc(acc.uid)}')" style="height:30px;padding:0 12px;font-size:12px;font-weight:700">
+                    Switch
+                  </button>
+                  <button class="ib sm" onclick="AccountManager.removeAccount('${esc(acc.uid)}')" title="Remove from this device" style="color:var(--kr-mut);font-size:14px">
+                    ✕
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div style="background:var(--kr-bg2);border-radius:12px;padding:10px 12px;font-size:12.5px;color:var(--kr-mut);text-align:center">
+            No other accounts on this device yet. Tap <strong>＋ Add Account</strong> to connect multiple accounts!
+          </div>
+        `}
+      </div>
+
+      <!-- 3. ACTIVITY STATS -->
+      <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin-bottom:18px">
+        <div style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:16px;padding:14px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--kr-brand)">${chatCount}</div>
+          <div style="font-size:12px;color:var(--kr-mut);margin-top:2px">Conversations</div>
+        </div>
+        <div style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:16px;padding:14px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--kr-accent)">${postCount}</div>
+          <div style="font-size:12px;color:var(--kr-mut);margin-top:2px">Pulse Posts</div>
+        </div>
+        <div style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:16px;padding:14px;text-align:center">
+          <div style="font-size:22px;font-weight:800;color:var(--kr-ok)">${friendCount}</div>
+          <div style="font-size:12px;color:var(--kr-mut);margin-top:2px">Connected</div>
+        </div>
+      </div>
+
+      <!-- 4. ACCOUNT SETTINGS & PREFERENCES -->
+      <div style="background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:20px;overflow:hidden;margin-bottom:18px;box-shadow:var(--kr-sh-1)">
+        <div style="padding:14px 16px 8px;font-size:14.5px;font-weight:800">Account Preferences</div>
+
+        <div class="row" onclick="openEditProfile()" style="cursor:pointer">
+          <div class="av sm" style="background:rgba(37,99,235,0.12);color:var(--kr-brand);font-size:16px">👤</div>
+          <div class="mid">
+            <div class="t1"><b>Edit Profile Details</b></div>
+            <div class="t2">Name, avatar, bio, and country</div>
+          </div>
+          <span class="pillx">›</span>
+        </div>
+
+        <div class="row" onclick="openPrivacy()" style="cursor:pointer">
+          <div class="av sm" style="background:rgba(124,58,237,0.12);color:var(--kr-accent);font-size:16px">🔒</div>
+          <div class="mid">
+            <div class="t1"><b>Privacy &amp; Safety</b></div>
+            <div class="t2">Online status, read receipts, typing indicator</div>
+          </div>
+          <span class="pillx">›</span>
+        </div>
+
+        <div class="row" onclick="openCredentials()" style="cursor:pointer">
+          <div class="av sm" style="background:rgba(22,163,74,0.12);color:var(--kr-ok);font-size:16px">🔑</div>
+          <div class="mid">
+            <div class="t1"><b>Password &amp; Security</b></div>
+            <div class="t2">Credentials, reset email, and protection</div>
+          </div>
+          <span class="pillx">›</span>
+        </div>
+
+        <div class="row" onclick="applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');renderProfileSection()" style="cursor:pointer">
+          <div class="av sm" style="background:rgba(245,158,11,0.12);color:var(--kr-warn);font-size:16px">🌓</div>
+          <div class="mid">
+            <div class="t1"><b>Appearance &amp; Theme</b></div>
+            <div class="t2">Current: <strong>${document.documentElement.getAttribute('data-theme') === 'dark' ? 'Dark Mode' : 'Light Mode'}</strong></div>
+          </div>
+          <span class="pillx">Toggle</span>
+        </div>
+
+        <div class="row" onclick="openGifConfigModal()" style="cursor:pointer">
+          <div class="av sm" style="background:rgba(219,39,119,0.12);color:#DB2777;font-size:16px">🎞️</div>
+          <div class="mid">
+            <div class="t1"><b>GIFs &amp; Media Provider</b></div>
+            <div class="t2">${GifEngine.provider() === 'none' ? 'Configure GIPHY API' : 'Connected · ' + GifEngine.provider()}</div>
+          </div>
+          <span class="pillx">›</span>
+        </div>
+      </div>
+
+      <!-- 5. LOG OUT SECTION -->
+      <div style="background:var(--kr-elev);border:1px solid rgba(225,29,72,0.25);border-radius:20px;padding:18px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:36px;height:36px;border-radius:50%;background:rgba(225,29,72,0.12);color:var(--kr-danger);display:flex;align-items:center;justify-content:center;font-size:18px">
+            🚪
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:800;color:var(--kr-danger)">Log Out System</div>
+            <div style="font-size:12px;color:var(--kr-mut)">Sign out of your session safely on this device</div>
+          </div>
+        </div>
+
+        <p style="font-size:12.5px;color:var(--kr-mut);margin:0 0 14px">
+          You can keep your account remembered on this device for rapid 1-tap switching, or log out completely.
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr;gap:8px">
+          <button class="btn block danger" onclick="confirmLogoutModal()" style="height:42px;font-weight:700;font-size:14px;border-radius:12px">
+            🚪 Log out of @${esc(me.username || 'user')}
+          </button>
+        </div>
+      </div>
+
+      <div style="text-align:center;color:var(--kr-mut);font-size:12px;padding-bottom:16px">
+        KLYRO Messenger · Fast · Private · Reliable
       </div>
 
     </div>
   `;
-
-  const joinBtn = s('arcade-code-btn');
-  if (joinBtn) {
-    joinBtn.onclick = () => {
-      const code = (s('arcade-code-in').value || '').trim();
-      if (!code) { toast('Please enter a room code'); return; }
-      ArcadeEngine.joinRoom('ludo', code);
-    };
-  }
 }
 
-/* ---------------- Solo Mode Difficulty Dialog ---------------- */
-function openSoloModal(gameType) {
-  const g = ARCADE_GAMES[gameType] || ARCADE_GAMES.ludo;
-  const showAiCount = (gameType === 'ludo' || gameType === 'snakes');
+/** Open Switch Account Modal Bottom Sheet */
+function openSwitchAccountModal() {
+  const list = AccountManager.getSavedAccounts();
+  const me = ST.me;
+  const otherAccounts = list.filter(a => !me || a.uid !== me.uid);
 
   openModal(`
-    <div class="pad">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-        <span style="font-size:32px">${g.icon}</span>
-        <div>
-          <h3 style="margin:0">${esc(g.name)} · Solo vs AI</h3>
-          <span style="font-size:12px;color:var(--kr-mut)">Play offline or online against KLYRO AI</span>
-        </div>
+    <div class="pad" style="max-width:440px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <h3 style="margin:0;font-size:18px;font-weight:800">Switch Account</h3>
+        <button class="ib sm" onclick="Nav.close('ov-modal')">✕</button>
       </div>
 
-      <div class="field">
-        <label>Select AI Difficulty</label>
-        <select id="solo-diff" class="inp">
-          <option value="beginner">Beginner (Casual &amp; Relaxed)</option>
-          <option value="easy">Easy (Friendly)</option>
-          <option value="normal" selected>Normal (Tactical Standard)</option>
-          <option value="hard">Hard (Aggressive &amp; Competitive)</option>
-          <option value="expert">Expert (Grandmaster Precision)</option>
-        </select>
-      </div>
-
-      ${showAiCount ? `
-        <div class="field">
-          <label>Number of AI Opponents</label>
-          <select id="solo-ai-count" class="inp">
-            <option value="1">1 AI Opponent (1v1 Match)</option>
-            <option value="2">2 AI Opponents (3-Player Battle)</option>
-            <option value="3" selected>3 AI Opponents (4-Player Classic)</option>
-          </select>
+      ${me ? `
+        <div style="margin-bottom:12px;font-size:12px;font-weight:700;color:var(--kr-mut);text-transform:uppercase">Active Account</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--kr-brand-soft);border:1.5px solid var(--kr-brand);border-radius:14px;padding:10px 12px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0">
+            ${safeMedia(me.photo) ? `<img src="${esc(safeMedia(me.photo))}" style="width:36px;height:36px;border-radius:50%;object-fit:cover" alt="">` : getAvatarHTML(me, 'sm')}
+            <div style="min-width:0">
+              <div style="font-weight:800;font-size:13.5px">${esc(userLabel(me))}</div>
+              <div style="font-size:11.5px;color:var(--kr-mut)">${esc(me.email || handleFrom(me))}</div>
+            </div>
+          </div>
+          <span style="font-size:11px;background:var(--kr-brand);color:#fff;font-weight:700;padding:2px 8px;border-radius:6px">ACTIVE</span>
         </div>
       ` : ''}
 
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:20px">
-        <button class="btn block" id="btn-start-solo">⚡ Launch Solo Game</button>
-        <button class="btn block ghost" onclick="Nav.close('ov-modal')">Cancel</button>
-      </div>
+      <div style="margin-bottom:10px;font-size:12px;font-weight:700;color:var(--kr-mut);text-transform:uppercase">Saved Accounts</div>
+
+      ${otherAccounts.length ? `
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+          ${otherAccounts.map(acc => `
+            <div style="display:flex;align-items:center;justify-content:space-between;background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:12px;padding:10px 12px;cursor:pointer" onclick="Nav.close('ov-modal');AccountManager.switchToAccount('${esc(acc.uid)}')">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                ${safeMedia(acc.photo) ? `<img src="${esc(safeMedia(acc.photo))}" style="width:34px;height:34px;border-radius:50%;object-fit:cover" alt="">` : `<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#64748B,#475569);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">${esc(initials(acc.name))}</div>`}
+                <div style="min-width:0">
+                  <div style="font-weight:700;font-size:13px">${esc(acc.name)}</div>
+                  <div style="font-size:11.5px;color:var(--kr-mut)">${esc(acc.email || ('@' + acc.username))}</div>
+                </div>
+              </div>
+              <button class="btn sm" style="height:28px;padding:0 10px;font-size:12px">Switch</button>
+            </div>
+          `).join('')}
+        </div>
+      ` : `
+        <div style="background:var(--kr-bg2);border-radius:12px;padding:14px;text-align:center;font-size:13px;color:var(--kr-mut);margin-bottom:16px">
+          No other accounts saved on this device.
+        </div>
+      `}
+
+      <button class="btn block" onclick="Nav.close('ov-modal');AccountManager.addAnotherAccount()" style="margin-bottom:8px">
+        ＋ Add Another Account
+      </button>
+      <button class="btn block ghost" onclick="Nav.close('ov-modal')">
+        Cancel
+      </button>
     </div>
   `);
-
-  s('btn-start-solo').onclick = () => {
-    const diff = s('solo-diff').value;
-    const aiCount = s('solo-ai-count') ? parseInt(s('solo-ai-count').value, 10) : 1;
-    Nav.close('ov-modal');
-    ArcadeEngine.startSoloGame(gameType, { difficulty: diff, aiCount: aiCount });
-  };
 }
 
-/* ---------------- Render Active Game Arena (Dedicated Full-Screen Page) ---------------- */
-function renderActiveGame(room) {
-  const canvas = s('arcade-dedicated-canvas') || s('arcade-game-view');
-  if (!canvas) return;
-
-  const isMyTurn = room.turn === ST.me.uid;
-  const isPlaying = room.status === 'playing';
-  const players = Object.values(room.players || {});
-  const gDef = ARCADE_GAMES[room.gameType] || { name: 'Arcade Match', icon: '🎮' };
-
-  let boardHtml = '';
-
-  /* 1. LUDO BOARD */
-  if (room.gameType === 'ludo') {
-    const diceVal = (room.state && room.state.diceValue) || 1;
-    const allTokens = (room.state && room.state.tokens) || {};
-    const myPlayer = room.players[ST.me.uid] || { color: 'red' };
-    const myTokens = allTokens[myPlayer.color] || [-1, -1, -1, -1];
-
-    boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:400px;margin:0 auto">
-        <!-- Main Authentic Ludo Board -->
-        <div class="ludo-board" style="width:320px;height:320px;background:#fff;border:4px solid #1E293B;border-radius:18px;position:relative;box-shadow:0 10px 30px rgba(0,0,0,0.2);overflow:hidden">
-          <!-- 4 Home Bases -->
-          <div style="position:absolute;top:0;left:0;width:125px;height:125px;background:#EF4444;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-bottom-right-radius:16px">
-            <div>RED YARD</div>
-            <div style="display:flex;gap:6px;margin-top:6px">
-              ${(allTokens.red || [-1,-1,-1,-1]).map(p => `<span style="width:14px;height:14px;border-radius:50%;background:#fff;display:inline-block;opacity:${p === -1 ? 1 : 0.25}"></span>`).join('')}
-            </div>
-          </div>
-          <div style="position:absolute;top:0;right:0;width:125px;height:125px;background:#10B981;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-bottom-left-radius:16px">
-            <div>GREEN YARD</div>
-            <div style="display:flex;gap:6px;margin-top:6px">
-              ${(allTokens.green || [-1,-1,-1,-1]).map(p => `<span style="width:14px;height:14px;border-radius:50%;background:#fff;display:inline-block;opacity:${p === -1 ? 1 : 0.25}"></span>`).join('')}
-            </div>
-          </div>
-          <div style="position:absolute;bottom:0;right:0;width:125px;height:125px;background:#F59E0B;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-top-left-radius:16px">
-            <div>YELLOW YARD</div>
-            <div style="display:flex;gap:6px;margin-top:6px">
-              ${(allTokens.yellow || [-1,-1,-1,-1]).map(p => `<span style="width:14px;height:14px;border-radius:50%;background:#fff;display:inline-block;opacity:${p === -1 ? 1 : 0.25}"></span>`).join('')}
-            </div>
-          </div>
-          <div style="position:absolute;bottom:0;left:0;width:125px;height:125px;background:#3B82F6;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:12px;border-top-right-radius:16px">
-            <div>BLUE YARD</div>
-            <div style="display:flex;gap:6px;margin-top:6px">
-              ${(allTokens.blue || [-1,-1,-1,-1]).map(p => `<span style="width:14px;height:14px;border-radius:50%;background:#fff;display:inline-block;opacity:${p === -1 ? 1 : 0.25}"></span>`).join('')}
-            </div>
-          </div>
-          
-          <!-- Center Victory Triangle / Home Hub -->
-          <div style="position:absolute;top:125px;left:125px;width:70px;height:70px;background:#F8FAFC;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:24px;border:2px solid #CBD5E1">
-            ⭐
-            <span style="font-size:9px;font-weight:800;color:#64748B">HOME</span>
-          </div>
-        </div>
-
-        <!-- Token Selection Controls -->
-        <div style="background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:16px;padding:12px 14px;width:100%;box-sizing:border-box">
-          <div style="font-size:12px;font-weight:700;color:var(--kr-mut);margin-bottom:8px">Your Tokens (${myPlayer.color.toUpperCase()}):</div>
-          <div style="display:flex;gap:8px">
-            ${myTokens.map((pos, idx) => {
-              const canMove = isMyTurn && isPlaying && ((pos === -1 && diceVal === 6) || (pos >= 0 && pos + diceVal <= 57));
-              const posLabel = pos === -1 ? 'Yard' : pos === 57 ? 'Home' : `Step ${pos}`;
-              return `
-                <button class="btn sm ${canMove ? '' : 'ghost'}" ${!canMove ? 'disabled' : ''} onclick="ArcadeEngine.executeLudoMove(${idx})" style="flex:1;flex-direction:column;padding:6px 2px;height:auto;gap:2px">
-                  <span style="font-size:15px">${pos === 57 ? '🏆' : pos === -1 ? '🏠' : '♟️'}</span>
-                  <span style="font-size:10px;font-weight:700">${posLabel}</span>
-                </button>
-              `;
-            }).join('')}
-          </div>
-        </div>
-
-        <!-- Roll Controls & Status -->
-        <div style="display:flex;align-items:center;gap:14px;margin-top:4px">
-          <button class="btn" id="ludo-dice-btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.rollLudoDice()" style="font-size:17px;height:48px;padding:0 24px;background:linear-gradient(135deg,#2563EB,#1D4ED8);box-shadow:0 4px 14px rgba(37,99,235,0.4)">
-            🎲 Roll (${diceVal})
-          </button>
-          <div style="font-size:13.5px;color:var(--kr-mut)">
-            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Roll or tap a token' : `<span style="color:var(--kr-mut)">Waiting for ${esc((room.players[room.turn] && room.players[room.turn].name) || 'opponent')}…</span>`}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  /* 2. CHESS BOARD */
-  else if (room.gameType === 'chess') {
-    const board = (room.state && room.state.board) || [];
-    const pieceIcons = {
-      'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
-      'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙', '.': ''
-    };
-
-    boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:390px;margin:0 auto">
-        <div class="chess-board" style="display:grid;grid-template-columns:repeat(8, 42px);grid-template-rows:repeat(8, 42px);border:4px solid #334155;border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.25)">
-          ${board.map((row, rIdx) => row.map((cell, cIdx) => {
-            const isLight = (rIdx + cIdx) % 2 === 0;
-            const bg = isLight ? '#F8FAFC' : '#94A3B8';
-            return `
-              <div class="chess-cell" data-r="${rIdx}" data-c="${cIdx}" style="width:42px;height:42px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:27px;cursor:pointer;user-select:none;transition:background 0.15s">
-                ${pieceIcons[cell] || ''}
-              </div>
-            `;
-          }).join('')).join('')}
-        </div>
-        <div style="margin-top:14px;font-size:13.5px;text-align:center">
-          ${isMyTurn ? '<b style="color:var(--kr-brand)">Your Turn!</b> Tap piece to select, then tap destination square.' : `<span style="color:var(--kr-mut)">Waiting for ${(room.players[room.turn] && room.players[room.turn].name) || 'opponent'}…</span>`}
-        </div>
-      </div>
-    `;
-  }
-
-  /* 3. CARROM BOARD */
-  else if (room.gameType === 'carrom') {
-    const coins = (room.state && room.state.coins) || [];
-    boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:390px;margin:0 auto">
-        <div class="carrom-board" style="width:320px;height:320px;background:#DEB887;border:10px solid #5C2C16;border-radius:16px;position:relative;box-shadow:0 10px 30px rgba(0,0,0,0.25)">
-          <!-- 4 Corner Pockets -->
-          <div style="position:absolute;top:6px;left:6px;width:28px;height:28px;border-radius:50%;background:#1A0F0A;border:2px solid #3D1C0F"></div>
-          <div style="position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:#1A0F0A;border:2px solid #3D1C0F"></div>
-          <div style="position:absolute;bottom:6px;left:6px;width:28px;height:28px;border-radius:50%;background:#1A0F0A;border:2px solid #3D1C0F"></div>
-          <div style="position:absolute;bottom:6px;right:6px;width:28px;height:28px;border-radius:50%;background:#1A0F0A;border:2px solid #3D1C0F"></div>
-          
-          <!-- Center Ring -->
-          <div style="position:absolute;top:115px;left:115px;width:90px;height:90px;border-radius:50%;border:2px dashed #8B4513;display:flex;align-items:center;justify-content:center">
-            <span style="font-size:12px;font-weight:800;color:#5C2C16">${coins.length} Coins</span>
-          </div>
-
-          <!-- Striker on baseline -->
-          <div style="position:absolute;bottom:26px;left:145px;width:30px;height:30px;border-radius:50%;background:#2563EB;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>
-        </div>
-
-        <div style="background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:14px;padding:12px 14px;width:100%;margin-top:12px;box-sizing:border-box">
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--kr-mut);margin-bottom:6px">
-            <span>Aim Angle: <b id="carrom-angle-val">90°</b></span>
-            <span>Power: <b id="carrom-power-val">80%</b></span>
-          </div>
-          <input type="range" id="carrom-angle" min="40" max="140" value="90" style="width:100%;accent-color:var(--kr-brand)" oninput="s('carrom-angle-val').textContent=this.value+'°'">
-          <input type="range" id="carrom-power" min="30" max="100" value="80" style="width:100%;accent-color:var(--kr-brand);margin-top:8px" oninput="s('carrom-power-val').textContent=this.value+'%'">
-        </div>
-
-        <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
-          <button class="btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.strikeCarrom(parseInt(s('carrom-angle').value,10), parseInt(s('carrom-power').value,10))" style="font-size:16px;height:46px;padding:0 24px">
-            🎯 Strike
-          </button>
-          <div style="font-size:13px;color:var(--kr-mut)">
-            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Adjust aim and strike' : 'Waiting for turn…'}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  /* 4. SNAKES & LADDERS BOARD */
-  else if (room.gameType === 'snakes') {
-    const diceVal = (room.state && room.state.diceValue) || 1;
-    const pos = (room.state && room.state.positions && room.state.positions[ST.me.uid]) || 1;
-    boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:390px;margin:0 auto">
-        <div style="width:320px;height:320px;background:linear-gradient(135deg,#FEF3C7,#FDE68A);border:4px solid #D97706;border-radius:16px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 30px rgba(0,0,0,0.2)">
-          <div style="display:flex;justify-content:space-between;font-weight:800;font-size:14px;color:#92400E">
-            <span>🏁 Cell 100</span>
-            <span>🐍 Snake 98→28</span>
-          </div>
-          <div style="text-align:center">
-            <div style="font-size:12px;color:#B45309;font-weight:700">CURRENT POSITION</div>
-            <div style="font-size:46px;font-weight:800;color:#78350F">${pos} <span style="font-size:22px">/ 100</span></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;color:#92400E">
-            <span>🪜 Ladder 28→84</span>
-            <span>Start 1</span>
-          </div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:12px;margin-top:16px">
-          <button class="btn" ${!isMyTurn || !isPlaying ? 'disabled' : ''} onclick="ArcadeEngine.rollSnakesDice()" style="font-size:16px;height:46px;padding:0 24px">
-            🎲 Roll (${diceVal})
-          </button>
-          <div style="font-size:13.5px;color:var(--kr-mut)">
-            ${isMyTurn ? '<b style="color:var(--kr-ok)">Your Turn!</b> Roll to advance' : 'Waiting for turn…'}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  /* 5. KLYRO RUSH */
-  else if (room.gameType === 'rush') {
-    const round = (room.state && room.state.round) || 1;
-    const sym = (room.state && room.state.targetSymbol) || '⚡';
-    boardHtml = `
-      <div style="display:flex;flex-direction:column;align-items:center;margin:16px 0">
-        <div style="font-size:14px;font-weight:700;color:var(--kr-mut);margin-bottom:12px">Round ${round} of 5</div>
-        <button onclick="ArcadeEngine.tapRushTarget()" style="width:200px;height:200px;border-radius:50%;background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;border:none;font-size:68px;cursor:pointer;box-shadow:0 14px 32px rgba(37,99,235,0.4);display:flex;align-items:center;justify-content:center;transition:transform 0.1s" onmousedown="this.style.transform='scale(0.94)'" onmouseup="this.style.transform='scale(1)'">
-          ${sym}
-        </button>
-        <div style="margin-top:16px;font-size:14px;color:var(--kr-brand);font-weight:700">TAP FAST! Highest score claims victory!</div>
-      </div>
-    `;
-  }
-
-  canvas.innerHTML = `
-    <div style="width:100%;max-width:440px;margin:0 auto">
-      <!-- Players Tray -->
-      <div style="display:flex;gap:10px;padding:12px 14px;background:var(--kr-bg2);border-radius:16px;border:1px solid var(--kr-line);margin-bottom:14px">
-        ${players.map(p => `
-          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-            <div class="av sm" style="background:${esc(colorFor(p.uid))};position:relative">
-              ${p.photo ? `<img src="${esc(p.photo)}" alt="">` : esc(initials(p.name))}
-              ${room.turn === p.uid ? `<div style="position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;border-radius:50%;background:var(--kr-ok);border:2px solid #fff"></div>` : ''}
-            </div>
-            <div style="min-width:0">
-              <div style="font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-                ${esc(p.name)} ${p.isAi ? '<span class="pillx" style="font-size:9.5px;padding:1px 5px">AI</span>' : ''}
-              </div>
-              <div style="font-size:11px;color:var(--kr-mut)">Score: ${p.score || 0}</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-
-      <!-- MATCH RESULT SCREEN (DEDICATED VICTORY CELEBRATION) -->
-      ${room.status === 'ended' ? `
-        <div style="margin:20px 0;padding:26px 20px;background:var(--kr-elev);border:1px solid var(--kr-line);border-radius:22px;text-align:center;box-shadow:var(--kr-sh)">
-          <div style="font-size:52px;margin-bottom:8px">🏆</div>
-          <h3 style="font-weight:800;font-size:22px;margin:0 0 6px">
-            ${room.winner === ST.me.uid ? 'Victory! You Won!' : 'Match Finished!'}
-          </h3>
-          <p style="font-size:13.5px;color:var(--kr-ok);font-weight:700;margin:0 0 20px">+120 XP earned towards Arcade Progression</p>
-          
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <button class="btn block" onclick="ArcadeEngine.rematch(ArcadeEngine.activeRoom)" style="background:linear-gradient(135deg,#2563EB,#1D4ED8)">
-              🔄 Play Rematch
-            </button>
-            <button class="btn block outline" onclick="ArcadeEngine.shareVictoryToPulse('${room.gameType}')">
-              ⚡ Share Outcome to Pulse
-            </button>
-            <button class="btn block ghost" onclick="Nav.back('main')">
-              🎮 Return to Arcade Hub
-            </button>
-          </div>
-        </div>
-      ` : boardHtml}
-    </div>
-  `;
-
-  // Wire Chess clicks
-  if (room.gameType === 'chess' && isMyTurn) {
-    let selected = null;
-    $$('.chess-cell', canvas).forEach(cell => {
-      cell.onclick = () => {
-        const r = parseInt(cell.dataset.r, 10);
-        const c = parseInt(cell.dataset.c, 10);
-        if (!selected) {
-          selected = { r, c };
-          cell.style.outline = '3px solid var(--kr-brand)';
-        } else {
-          ArcadeEngine.executeChessMove(selected.r, selected.c, r, c);
-          selected = null;
-        }
-      };
-    });
-  }
-}
-
-/* ---------------- Game Detail Modal ---------------- */
-function openGameDetailModal(gameId) {
-  const g = ARCADE_GAMES[gameId];
-  if (!g) return;
+/** Comprehensive Logout Confirmation Sheet */
+function confirmLogoutModal() {
+  if (!ST.me) return;
+  const username = ST.me.username || 'user';
 
   openModal(`
-    <div class="pad" style="max-width:440px;padding:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:32px">${g.icon}</span>
-          <div>
-            <h3 style="margin:0;font-size:18px">${g.name}</h3>
-            <span style="font-size:12px;color:var(--kr-mut)">${g.tagline}</span>
-          </div>
-        </div>
-        <button class="ib sm" onclick="Nav.close('ov-modal')">✕</button>
+    <div class="pad" style="max-width:400px;text-align:center">
+      <div style="width:52px;height:52px;border-radius:50%;background:rgba(225,29,72,0.12);color:var(--kr-danger);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px">
+        🚪
       </div>
+      <h3 style="margin:0 0 8px;font-size:18px;font-weight:800">Log out of @${esc(username)}?</h3>
+      <p style="color:var(--kr-mut);font-size:13.5px;margin:0 0 20px;line-height:1.4">
+        You can keep your account saved on this device for 1-tap switching, or wipe it completely.
+      </p>
 
-      <p style="font-size:13.5px;color:var(--kr-txt);line-height:1.5;margin:0 0 16px">${g.desc}</p>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px;text-align:center">
-        <div style="background:var(--kr-bg2);padding:10px 8px;border-radius:12px;border:1px solid var(--kr-line)">
-          <div style="font-size:11px;color:var(--kr-mut)">Players</div>
-          <div style="font-size:13px;font-weight:700">${g.playerCounts.join(' or ')}</div>
-        </div>
-        <div style="background:var(--kr-bg2);padding:10px 8px;border-radius:12px;border:1px solid var(--kr-line)">
-          <div style="font-size:11px;color:var(--kr-mut)">Duration</div>
-          <div style="font-size:13px;font-weight:700">${g.duration}</div>
-        </div>
-        <div style="background:var(--kr-bg2);padding:10px 8px;border-radius:12px;border:1px solid var(--kr-line)">
-          <div style="font-size:11px;color:var(--kr-mut)">Type</div>
-          <div style="font-size:13px;font-weight:700">${g.category}</div>
-        </div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button class="btn block" onclick="Nav.close('ov-modal'); ArcadeEngine.createRoom('${g.id}', ${g.playerCounts[0]})">
-          Quick Match
-        </button>
-        <button class="btn block outline" onclick="Nav.close('ov-modal'); openInviteFriendToGame('${g.id}')">
-          Challenge Friend
-        </button>
-      </div>
+      <button class="btn block danger" onclick="Nav.close('ov-modal');executeLogout(false)" style="margin-bottom:10px;height:42px;font-weight:700">
+        Log out (Keep on this device)
+      </button>
+      <button class="btn block outline" onclick="Nav.close('ov-modal');executeLogout(true)" style="margin-bottom:10px;height:40px;color:var(--kr-danger);border-color:var(--kr-danger)">
+        Log out &amp; Remove from device
+      </button>
+      <button class="btn block ghost" onclick="Nav.close('ov-modal')" style="height:38px">
+        Cancel
+      </button>
     </div>
   `);
 }
 
-function openInviteFriendToGame(gameId) {
-  const g = ARCADE_GAMES[gameId];
-  const contacts = Object.keys(ST.me ? ST.me.contacts || {} : {}).map(u => ST.users[u]).filter(Boolean);
+/** Execute the actual logout */
+async function executeLogout(removeFromDevice) {
+  const uid = ST.me ? ST.me.uid : null;
 
-  if (!contacts.length) {
-    toast('No connected friends yet. Connect with online users in Discover!');
-    return;
-  }
-
-  const actions = contacts.map(c => ({
-    icon: '💬',
-    label: userLabel(c),
-    run: () => {
-      ArcadeEngine.sendGameChallenge(gameId, c.uid);
+  try {
+    if (ST.me && ST.me.uid) {
+      await db.ref('users/' + ST.me.uid + '/online').set(false).catch(() => {});
+      await db.ref('users/' + ST.me.uid + '/lastSeen').set(now()).catch(() => {});
     }
-  }));
+  } catch (e) {}
 
-  openSheet('Challenge Friend to ' + (g ? g.name : 'Game'), actions);
-}
+  Calls.end(true);
+  if (ST.mediaRec) Voice.cancel();
+  unlistenAll();
+  StatusEngine.teardown();
+  if (typeof PostsEngine !== 'undefined') PostsEngine.teardown();
 
-/* ---------------- Gamer Profile Modal ---------------- */
-function openGamerProfileModal() {
-  const p = ST.gamerProfile || { level: 1, xp: 0, totalWins: 0, totalMatches: 0, streak: 0 };
-  const winRate = p.totalMatches ? Math.round((p.totalWins / p.totalMatches) * 100) : 0;
+  // Reset overlays
+  ['ov-onboarding', 'ov-sheet', 'ov-modal', 'ov-media', 'ov-story'].forEach(id => {
+    const el = s(id);
+    if (el) el.classList.remove('open');
+  });
 
-  openModal(`
-    <div class="pad" style="max-width:440px;padding:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <h3 style="margin:0;font-size:18px">Arcade Gamer Profile</h3>
-        <button class="ib sm" onclick="Nav.close('ov-modal')">✕</button>
-      </div>
+  if (removeFromDevice && uid) {
+    AccountManager.removeAccount(uid);
+  } else if (ST.me) {
+    AccountManager.saveActive(ST.me);
+  }
 
-      <div style="display:flex;align-items:center;gap:14px;padding:16px;background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;border-radius:18px;margin-bottom:16px">
-        <div class="av lg" style="background:#fff;color:var(--kr-brand);font-weight:800;font-size:24px">
-          ${ST.me && ST.me.photo ? `<img src="${esc(ST.me.photo)}" alt="">` : esc(initials(ST.me ? ST.me.name : 'You'))}
-        </div>
-        <div>
-          <div style="font-size:17px;font-weight:800">${esc(ST.me ? ST.me.name : 'Player')}</div>
-          <div style="font-size:12.5px;opacity:0.9">Arcade Master · Level ${p.level}</div>
-          <div style="font-size:11px;opacity:0.8;margin-top:2px">${p.xp} Total XP</div>
-        </div>
-      </div>
+  ST.me = null;
+  ST.chats = {};
+  ST.chatMsgs = {};
+  ST.unread = {};
+  ST.requests = {};
+  ST.chat = null;
+  ST.partnerTyping = false;
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px;text-align:center">
-        <div style="background:var(--kr-bg2);padding:10px 8px;border-radius:12px;border:1px solid var(--kr-line)">
-          <div style="font-size:11px;color:var(--kr-mut)">Matches</div>
-          <div style="font-size:15px;font-weight:800">${p.totalMatches || 0}</div>
-        </div>
-        <div style="background:var(--kr-bg2);padding:10px 8px;border-radius:12px;border:1px solid var(--kr-line)">
-          <div style="font-size:11px;color:var(--kr-mut)">Victories</div>
-          <div style="font-size:15px;font-weight:800;color:var(--kr-ok)">${p.totalWins || 0}</div>
-        </div>
-        <div style="background:var(--kr-bg2);padding:10px 8px;border-radius:12px;border:1px solid var(--kr-line)">
-          <div style="font-size:11px;color:var(--kr-mut)">Win Rate</div>
-          <div style="font-size:15px;font-weight:800">${winRate}%</div>
-        </div>
-      </div>
+  try { await auth.signOut(); } catch (e) {}
+  AuthState.set(AuthState.SIGNED_OUT);
+  toast('Signed out successfully');
 
-      <h4 style="margin:0 0 8px;font-size:14px">Unlocked Badges</h4>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-        <span style="font-size:12px;font-weight:700;padding:4px 10px;background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:8px">🎖️ Rookie</span>
-        <span style="font-size:12px;font-weight:700;padding:4px 10px;background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:8px">🎲 Ludo Competitor</span>
-        <span style="font-size:12px;font-weight:700;padding:4px 10px;background:var(--kr-bg2);border:1px solid var(--kr-line);border-radius:8px">⚡ Fast Reflex</span>
-      </div>
-
-      <button class="btn block ghost" onclick="Nav.close('ov-modal')">Close</button>
-    </div>
-  `);
+  setTimeout(() => {
+    AccountManager.renderSavedAccountsOnLogin();
+  }, 200);
 }
 
 
@@ -9832,7 +8767,7 @@ function renderChats() {
     const u = e.other;
     const unread = Number(ST.unread[e.cid]) || 0;
     const online = isUserOnlineNow(u);
-    const time = fmtWhen(e.at);
+    const time = fmtChatPreviewTime(e.at);
     const sub = chatPreviewCache[e.cid] || (e.type === 'group' ? 'Group chat' : (online ? 'Online now' : (u.username ? '@' + u.username : 'Tap to chat')));
 
     return `
@@ -9881,7 +8816,7 @@ function watchChatPreviews(list) {
       const row = $('[data-open="' + e.cid + '"] .t2');
       if (row) row.textContent = chatPreviewCache[e.cid];
       const at = $('[data-open="' + e.cid + '"] .time');
-      if (at && m.timestamp) at.textContent = fmtWhen(m.timestamp);
+      if (at && m.timestamp) at.textContent = fmtChatPreviewTime(m.timestamp);
       if (e.other) e.other.lastMsgAt = Math.max(e.other.lastMsgAt || 0, m.timestamp || 0);
     });
     chatPreviewSlots[e.cid] = { ref: db.ref(path), fn: chatPreviewSlots[e.cid], path: path };
@@ -10063,18 +8998,27 @@ function markSeen(snap, m) {
   if (!m || m.sender === ST.me.uid) return;
   const mineReads = privacyOf(ST.me).readReceipts !== false;
   if (ST.chat.type === 'direct') {
-    if (mineReads && m.status !== 'seen') snap.ref.update({ status: 'seen', seenAt: now() }).catch(() => {});
-    else if (!mineReads && m.status !== 'delivered') snap.ref.update({ status: 'delivered' }).catch(() => {});
+    if (mineReads && m.status !== 'seen') snap.ref.update({ status: 'seen', seenAt: now(), deliveredAt: m.deliveredAt || now() }).catch(() => {});
+    else if (!mineReads && m.status !== 'delivered') snap.ref.update({ status: 'delivered', deliveredAt: now() }).catch(() => {});
   } else if (mineReads) {
     snap.ref.child('readBy/' + ST.me.uid).set(now()).catch(() => {});
   }
 }
 
-/* ---------------- Message rendering ---------------- */
+/* ---------------- Message rendering & Delivery Status ---------------- */
+function tickStatus(m) {
+  const s = m ? (m.status || 'sent') : 'sent';
+  if (s === 'seen' || s === 'read') {
+    return '<span class="tick-group read" title="Read (✓✓✓)">✓✓✓</span>';
+  }
+  if (s === 'delivered') {
+    return '<span class="tick-group delivered" title="Delivered (✓✓)">✓✓</span>';
+  }
+  return '<span class="tick-group sent" title="Sent (✓)">✓</span>';
+}
+
 function tick(read) {
-  return read
-    ? '<svg class="tick read" viewBox="0 0 16 16"><path d="M15 3.3l-.5-.4a.4.4 0 00-.5.1L8.7 9.9a.3.3 0 01-.5 0l-.4-.3a.3.3 0 00-.5 0l-.4.5a.4.4 0 000 .5l1.3 1.3c.2.1.4.1.5 0l6.3-8a.4.4 0 000-.6zm-4.1 0l-.5-.4a.4.4 0 00-.5.1L4.6 9.9a.3.3 0 01-.5 0L1.9 7.8a.4.4 0 00-.5 0l-.4.5a.4.4 0 000 .5l3.2 3.2c.2.1.4.1.5 0l6.3-8a.4.4 0 000-.6z"/></svg>'
-    : '<svg class="tick" viewBox="0 0 16 16"><path d="M6.4 12.3l-3.8-3.8-1.4 1.4 5.2 5.2 10-10-1.4-1.4z"/></svg>';
+  return read ? '<span class="tick-group read">✓✓✓</span>' : '<span class="tick-group sent">✓</span>';
 }
 
 function linkify(text) {
@@ -10084,11 +9028,84 @@ function linkify(text) {
 function metaHTML(m) {
   const mine = m.sender === ST.me.uid;
   const direct = !ST.chat || ST.chat.type === 'direct';
-  const read = m.status === 'seen';
   const ts = m.timestamp || m.createdAt || now();
-  const timeStr = fmtTime(ts);
+  const timeStr = fmtMessageTime(ts);
   const fullTime = fmtFullTime(ts);
-  return `<div class="meta" title="Sent ${esc(fullTime)}" onclick="event.stopPropagation();openMessageDetails('${esc(m.key)}')">${esc(timeStr)}${m.edited ? ' · edited' : ''}${mine && direct ? ' ' + tick(read) : ''}</div>`;
+  return `<div class="meta" title="Sent ${esc(fullTime)}" onclick="event.stopPropagation();openMessageDetails('${esc(m.key)}')">${esc(timeStr)}${m.edited ? ' · edited' : ''}${mine && direct ? ' ' + tickStatus(m) : ''}</div>`;
+}
+
+function wireSwipeToReply(el, m) {
+  if (!el || !m) return;
+  let startX = 0;
+  let startY = 0;
+  let isSwiping = false;
+  let triggered = false;
+  const cue = el.querySelector('.swipe-reply-cue');
+
+  el.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    isSwiping = false;
+    triggered = false;
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (e.touches.length !== 1) return;
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    const deltaX = touchX - startX;
+    const deltaY = touchY - startY;
+
+    if (!isSwiping) {
+      if (deltaX > 14 && deltaX > Math.abs(deltaY) * 1.3) {
+        isSwiping = true;
+        el.classList.add('swiping');
+      } else {
+        return;
+      }
+    }
+
+    if (isSwiping && deltaX > 0) {
+      const clampedX = Math.min(75, deltaX * 0.55);
+      el.style.transform = `translateX(${clampedX}px)`;
+
+      if (cue) {
+        const progress = Math.min(1, clampedX / 42);
+        cue.style.opacity = String(progress);
+        cue.style.transform = `translateY(-50%) scale(${0.6 + progress * 0.45})`;
+
+        if (clampedX >= 42 && !triggered) {
+          triggered = true;
+          cue.classList.add('active');
+          try { if (navigator && navigator.vibrate) navigator.vibrate(25); } catch (err) {}
+        } else if (clampedX < 42 && triggered) {
+          triggered = false;
+          cue.classList.remove('active');
+        }
+      }
+    }
+  }, { passive: true });
+
+  const finishSwipe = () => {
+    if (!isSwiping) return;
+    isSwiping = false;
+    el.classList.remove('swiping');
+    el.style.transform = '';
+    if (cue) {
+      cue.style.opacity = '0';
+      cue.style.transform = 'translateY(-50%) scale(0.6)';
+      cue.classList.remove('active');
+    }
+    if (triggered) {
+      triggered = false;
+      setReply(m);
+      try { if (navigator && navigator.vibrate) navigator.vibrate(35); } catch (err) {}
+    }
+  };
+
+  el.addEventListener('touchend', finishSwipe, { passive: true });
+  el.addEventListener('touchcancel', finishSwipe, { passive: true });
 }
 
 function reactionsHTML(m) {
@@ -10114,18 +9131,7 @@ function bodyHTML(m) {
   }
   if (m.type === 'sticker') return `<div style="font-size:46px;line-height:1.1">${esc(m.sticker || '🙂')}</div>`;
   if (m.type === 'game_invite') {
-    const isMine = m.sender === ST.me.uid;
-    const gameNames = { ludo: '🎲 Ludo Club', chess: '♟️ Speed Chess', carrom: '🎯 Carrom Strike' };
-    const title = gameNames[m.gameType] || '🎮 Arcade Match';
-    return `
-      <div class="game-invite-card" style="min-width:210px;padding:6px 2px">
-        <div style="font-weight:700;font-size:14px;margin-bottom:3px">${title}</div>
-        <div style="font-size:12.5px;opacity:0.9;margin-bottom:10px">${esc(m.text || 'Challenged you to a game!')}</div>
-        <button class="btn sm" onclick="ArcadeEngine.joinRoom('${esc(m.gameType)}', '${esc(m.roomId)}')" style="width:100%;background:#fff;color:var(--kr-brand);font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,0.15)">
-          ${isMine ? 'Open Game Room' : 'Accept & Play'}
-        </button>
-      </div>
-    `;
+    return `<div style="font-size:13px;opacity:0.85;padding:4px 0">${esc(m.text || 'Game match invite')}</div>`;
   }
   if (m.type === 'poll' && m.poll) return pollHTML(m);
   if (['image','video','audio','voice','file'].indexOf(m.type) >= 0) {
@@ -10173,11 +9179,15 @@ function renderMessage(m) {
   const sepHTML = (prevSep && prevSep.textContent === dateStr) ? '' : `<div class="daysep">${esc(dateStr)}</div>`;
   const senderName = (!mine && ST.chat && ST.chat.type === 'group')
     ? `<div class="sender">${esc(userLabel(ST.users[m.sender] || { uid: m.sender }))}</div>` : '';
-  const reply = m.replyTo ? `<div class="reply-q" onclick="scrollToMsg('${esc(m.replyTo.key)}')" title="Tap to jump to quoted message"><b>${esc(m.replyTo.name || 'Reply')}</b><span>${esc(m.replyTo.text || 'Attachment')}</span></div>` : '';
+  
+  const replyTargetId = (m.replyTo && (m.replyTo.key || m.replyTo.messageId)) || m.replyToMessageId;
+  const reply = replyTargetId ? `<div class="reply-q" onclick="scrollToMsg('${esc(replyTargetId)}')" title="Tap to jump to quoted message"><b>${esc((m.replyTo && m.replyTo.name) || 'Reply')}</b><span>${esc((m.replyTo && m.replyTo.text) || 'Attachment')}</span></div>` : '';
   const fwd = m.forwarded ? '<div style="font-size:11px;opacity:0.8;font-style:italic;margin-bottom:3px">↪ Forwarded</div>' : '';
   const isMedia = ['image','video','audio','voice','file'].indexOf(m.type) >= 0;
 
   const html = `${sepHTML}<div class="mwrap ${mine ? 'me' : 'them'}" id="m-${esc(m.key)}">
+      <div class="swipe-reply-cue">↩</div>
+      <button type="button" class="msg-quick-reply" onclick="event.stopPropagation();setReply(ST.chatMsgs['${esc(m.key)}'] || { key: '${esc(m.key)}' })" title="Reply to this message">↩</button>
       ${senderName}
       <div class="bub ${isMedia ? 'media' : ''}" data-key="${esc(m.key)}">${reply}${fwd}${bodyHTML(m)}${metaHTML(m)}</div>
       ${reactionsHTML(m)}
@@ -10189,9 +9199,10 @@ function renderMessage(m) {
 
   const el = s('m-' + m.key);
   if (el) {
+    wireSwipeToReply(el, m);
     let pressTimer = null;
     el.oncontextmenu = e => { e.preventDefault(); openMessageMenu(m.key); };
-    el.addEventListener('touchstart', () => { pressTimer = setTimeout(() => openMessageMenu(m.key), 500); }, { passive: true });
+    el.addEventListener('touchstart', () => { pressTimer = setTimeout(() => openMessageMenu(m.key), 520); }, { passive: true });
     ['touchend','touchmove','touchcancel'].forEach(ev => el.addEventListener(ev, () => clearTimeout(pressTimer), { passive: true }));
     if (m.media && (m.media.kind === 'p2p' || m.media.kind === 'inline')) hydrateMedia(m);
   }
@@ -10216,8 +9227,14 @@ function openMessageDetails(key) {
   const mine = m.sender === ST.me.uid;
   const author = mine ? 'You' : userLabel(ST.users[m.sender] || { uid: m.sender });
   const ts = m.timestamp || m.createdAt || now();
-  const statusStr = mine ? (m.status === 'seen' ? '✓✓ Seen / Read' : m.status === 'delivered' ? '✓✓ Delivered' : '✓ Sent') : 'Received';
+  const statusStr = mine ? (
+    (m.status === 'seen' || m.status === 'read') ? '✓✓✓ Read / Opened' :
+    (m.status === 'delivered') ? '✓✓ Delivered to recipient device' :
+    '✓ Sent & accepted by server'
+  ) : 'Received';
+  const deliveredStr = m.deliveredAt ? ` · delivered at ${fmtTime(m.deliveredAt)}` : '';
   const seenStr = m.seenAt ? ` · read at ${fmtTime(m.seenAt)}` : '';
+  const replyTargetId = (m.replyTo && (m.replyTo.key || m.replyTo.messageId)) || m.replyToMessageId;
 
   openModal(`
     <div class="pad">
@@ -10233,18 +9250,19 @@ function openMessageDetails(key) {
         </div>
         <div>
           <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Status</div>
-          <div style="font-weight:600;margin-top:2px">${esc(statusStr + seenStr)}</div>
+          <div style="font-weight:600;margin-top:2px">${esc(statusStr + deliveredStr + seenStr)}</div>
         </div>
         <div>
           <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Message Type</div>
           <div style="font-weight:600;margin-top:2px;text-transform:capitalize">${esc(m.type || 'text')}</div>
         </div>
-        ${m.replyTo ? `
+        ${replyTargetId ? `
           <div>
             <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Reply Target</div>
-            <div style="padding:10px 12px;background:var(--kr-bg2);border-radius:12px;border-left:3px solid var(--kr-brand);margin-top:4px">
-              <div style="font-weight:700;font-size:13px">${esc(m.replyTo.name || 'Message')}</div>
-              <div style="font-size:13px;color:var(--kr-mut);margin-top:2px">${esc(m.replyTo.text || '')}</div>
+            <div style="padding:10px 12px;background:var(--kr-bg2);border-radius:12px;border-left:3px solid var(--kr-brand);margin-top:4px;cursor:pointer" onclick="Nav.close('ov-modal');scrollToMsg('${esc(replyTargetId)}')">
+              <div style="font-weight:700;font-size:13px">${esc((m.replyTo && m.replyTo.name) || 'Message')}</div>
+              <div style="font-size:13px;color:var(--kr-mut);margin-top:2px">${esc((m.replyTo && m.replyTo.text) || '')}</div>
+              <div style="font-size:11.5px;color:var(--kr-brand);margin-top:4px;font-weight:600">Tap to jump to quoted message ›</div>
             </div>
           </div>
         ` : ''}
@@ -11624,41 +10642,11 @@ function openInvite() {
 }
 
 function logOut() {
-  confirmSheet('Log out of KLYRO', 'You will need to sign in again to access your messages.', 'Log out', async () => {
-    try {
-      if (ST.me && ST.me.uid) {
-        await db.ref('users/' + ST.me.uid + '/online').set(false).catch(() => {});
-        await db.ref('users/' + ST.me.uid + '/lastSeen').set(now()).catch(() => {});
-      }
-    } catch (e) {}
-
-    Calls.end(true);
-    if (ST.mediaRec) Voice.cancel();
-    unlistenAll();
-    StatusEngine.teardown();
-    if (typeof PostsEngine !== 'undefined') PostsEngine.teardown();
-    if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.teardown();
-
-    // Clean up all navigation overlays
-    ['ov-onboarding', 'ov-arcade-game', 'ov-sheet', 'ov-modal', 'ov-media', 'ov-story'].forEach(id => {
-      const el = s(id);
-      if (el) el.classList.remove('open');
-    });
-
-    // Reset session caches
-    ST.me = null;
-    ST.chats = {};
-    ST.chatMsgs = {};
-    ST.unread = {};
-    ST.requests = {};
-    ST.chat = null;
-    ST.partnerTyping = false;
-    ST.gamerProfile = null;
-
-    try { await auth.signOut(); } catch (e) {}
-    AuthState.set(AuthState.SIGNED_OUT);
-    toast('Logged out of KLYRO');
-  }, true);
+  if (typeof confirmLogoutModal === 'function') {
+    confirmLogoutModal();
+  } else {
+    executeLogout(false);
+  }
 }
 
 function renderSettings() {
@@ -11770,18 +10758,21 @@ function initLiveApp() {
   MediaEngine.init();
   StatusEngine.init();
   if (typeof PostsEngine !== 'undefined') PostsEngine.init();
-  if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.init();
   Calls.listenCalls();
   presence(ST.me.uid);
   registerDevice(ST.me.uid);
   Store.cleanup();
   Store.open().catch(() => {});
 
+  if (typeof AccountManager !== 'undefined') {
+    AccountManager.saveActive(ST.me);
+  }
+
   renderChats();
   renderPeople();
   renderStatus();
   if (typeof renderPosts === 'function') renderPosts();
-  if (typeof renderArcade === 'function') renderArcade();
+  if (typeof renderProfileSection === 'function') renderProfileSection();
   renderSettings();
 
   if ('Notification' in window && Notification.permission === 'default') {
@@ -11804,6 +10795,7 @@ function bootKlyro() {
     console.warn('[KLYRO] Firebase Auth unavailable — showing login view');
     setTimeout(() => {
       AuthState.set(AuthState.SIGNED_OUT);
+      if (typeof AccountManager !== 'undefined') AccountManager.renderSavedAccountsOnLogin();
     }, 500);
     return;
   }
@@ -11816,9 +10808,9 @@ function bootKlyro() {
       MediaEngine.teardown();
       StatusEngine.teardown();
       if (typeof PostsEngine !== 'undefined') PostsEngine.teardown();
-      if (typeof ArcadeEngine !== 'undefined') ArcadeEngine.teardown();
       Calls.end(true);
       AuthState.set(AuthState.SIGNED_OUT);
+      if (typeof AccountManager !== 'undefined') AccountManager.renderSavedAccountsOnLogin();
       return;
     }
 

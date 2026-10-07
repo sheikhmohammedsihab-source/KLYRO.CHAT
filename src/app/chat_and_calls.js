@@ -48,7 +48,7 @@ function renderChats() {
     const u = e.other;
     const unread = Number(ST.unread[e.cid]) || 0;
     const online = isUserOnlineNow(u);
-    const time = fmtWhen(e.at);
+    const time = fmtChatPreviewTime(e.at);
     const sub = chatPreviewCache[e.cid] || (e.type === 'group' ? 'Group chat' : (online ? 'Online now' : (u.username ? '@' + u.username : 'Tap to chat')));
 
     return `
@@ -97,7 +97,7 @@ function watchChatPreviews(list) {
       const row = $('[data-open="' + e.cid + '"] .t2');
       if (row) row.textContent = chatPreviewCache[e.cid];
       const at = $('[data-open="' + e.cid + '"] .time');
-      if (at && m.timestamp) at.textContent = fmtWhen(m.timestamp);
+      if (at && m.timestamp) at.textContent = fmtChatPreviewTime(m.timestamp);
       if (e.other) e.other.lastMsgAt = Math.max(e.other.lastMsgAt || 0, m.timestamp || 0);
     });
     chatPreviewSlots[e.cid] = { ref: db.ref(path), fn: chatPreviewSlots[e.cid], path: path };
@@ -279,18 +279,27 @@ function markSeen(snap, m) {
   if (!m || m.sender === ST.me.uid) return;
   const mineReads = privacyOf(ST.me).readReceipts !== false;
   if (ST.chat.type === 'direct') {
-    if (mineReads && m.status !== 'seen') snap.ref.update({ status: 'seen', seenAt: now() }).catch(() => {});
-    else if (!mineReads && m.status !== 'delivered') snap.ref.update({ status: 'delivered' }).catch(() => {});
+    if (mineReads && m.status !== 'seen') snap.ref.update({ status: 'seen', seenAt: now(), deliveredAt: m.deliveredAt || now() }).catch(() => {});
+    else if (!mineReads && m.status !== 'delivered') snap.ref.update({ status: 'delivered', deliveredAt: now() }).catch(() => {});
   } else if (mineReads) {
     snap.ref.child('readBy/' + ST.me.uid).set(now()).catch(() => {});
   }
 }
 
-/* ---------------- Message rendering ---------------- */
+/* ---------------- Message rendering & Delivery Status ---------------- */
+function tickStatus(m) {
+  const s = m ? (m.status || 'sent') : 'sent';
+  if (s === 'seen' || s === 'read') {
+    return '<span class="tick-group read" title="Read (✓✓✓)">✓✓✓</span>';
+  }
+  if (s === 'delivered') {
+    return '<span class="tick-group delivered" title="Delivered (✓✓)">✓✓</span>';
+  }
+  return '<span class="tick-group sent" title="Sent (✓)">✓</span>';
+}
+
 function tick(read) {
-  return read
-    ? '<svg class="tick read" viewBox="0 0 16 16"><path d="M15 3.3l-.5-.4a.4.4 0 00-.5.1L8.7 9.9a.3.3 0 01-.5 0l-.4-.3a.3.3 0 00-.5 0l-.4.5a.4.4 0 000 .5l1.3 1.3c.2.1.4.1.5 0l6.3-8a.4.4 0 000-.6zm-4.1 0l-.5-.4a.4.4 0 00-.5.1L4.6 9.9a.3.3 0 01-.5 0L1.9 7.8a.4.4 0 00-.5 0l-.4.5a.4.4 0 000 .5l3.2 3.2c.2.1.4.1.5 0l6.3-8a.4.4 0 000-.6z"/></svg>'
-    : '<svg class="tick" viewBox="0 0 16 16"><path d="M6.4 12.3l-3.8-3.8-1.4 1.4 5.2 5.2 10-10-1.4-1.4z"/></svg>';
+  return read ? '<span class="tick-group read">✓✓✓</span>' : '<span class="tick-group sent">✓</span>';
 }
 
 function linkify(text) {
@@ -300,11 +309,84 @@ function linkify(text) {
 function metaHTML(m) {
   const mine = m.sender === ST.me.uid;
   const direct = !ST.chat || ST.chat.type === 'direct';
-  const read = m.status === 'seen';
   const ts = m.timestamp || m.createdAt || now();
-  const timeStr = fmtTime(ts);
+  const timeStr = fmtMessageTime(ts);
   const fullTime = fmtFullTime(ts);
-  return `<div class="meta" title="Sent ${esc(fullTime)}" onclick="event.stopPropagation();openMessageDetails('${esc(m.key)}')">${esc(timeStr)}${m.edited ? ' · edited' : ''}${mine && direct ? ' ' + tick(read) : ''}</div>`;
+  return `<div class="meta" title="Sent ${esc(fullTime)}" onclick="event.stopPropagation();openMessageDetails('${esc(m.key)}')">${esc(timeStr)}${m.edited ? ' · edited' : ''}${mine && direct ? ' ' + tickStatus(m) : ''}</div>`;
+}
+
+function wireSwipeToReply(el, m) {
+  if (!el || !m) return;
+  let startX = 0;
+  let startY = 0;
+  let isSwiping = false;
+  let triggered = false;
+  const cue = el.querySelector('.swipe-reply-cue');
+
+  el.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    isSwiping = false;
+    triggered = false;
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (e.touches.length !== 1) return;
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+    const deltaX = touchX - startX;
+    const deltaY = touchY - startY;
+
+    if (!isSwiping) {
+      if (deltaX > 14 && deltaX > Math.abs(deltaY) * 1.3) {
+        isSwiping = true;
+        el.classList.add('swiping');
+      } else {
+        return;
+      }
+    }
+
+    if (isSwiping && deltaX > 0) {
+      const clampedX = Math.min(75, deltaX * 0.55);
+      el.style.transform = `translateX(${clampedX}px)`;
+
+      if (cue) {
+        const progress = Math.min(1, clampedX / 42);
+        cue.style.opacity = String(progress);
+        cue.style.transform = `translateY(-50%) scale(${0.6 + progress * 0.45})`;
+
+        if (clampedX >= 42 && !triggered) {
+          triggered = true;
+          cue.classList.add('active');
+          try { if (navigator && navigator.vibrate) navigator.vibrate(25); } catch (err) {}
+        } else if (clampedX < 42 && triggered) {
+          triggered = false;
+          cue.classList.remove('active');
+        }
+      }
+    }
+  }, { passive: true });
+
+  const finishSwipe = () => {
+    if (!isSwiping) return;
+    isSwiping = false;
+    el.classList.remove('swiping');
+    el.style.transform = '';
+    if (cue) {
+      cue.style.opacity = '0';
+      cue.style.transform = 'translateY(-50%) scale(0.6)';
+      cue.classList.remove('active');
+    }
+    if (triggered) {
+      triggered = false;
+      setReply(m);
+      try { if (navigator && navigator.vibrate) navigator.vibrate(35); } catch (err) {}
+    }
+  };
+
+  el.addEventListener('touchend', finishSwipe, { passive: true });
+  el.addEventListener('touchcancel', finishSwipe, { passive: true });
 }
 
 function reactionsHTML(m) {
@@ -378,11 +460,15 @@ function renderMessage(m) {
   const sepHTML = (prevSep && prevSep.textContent === dateStr) ? '' : `<div class="daysep">${esc(dateStr)}</div>`;
   const senderName = (!mine && ST.chat && ST.chat.type === 'group')
     ? `<div class="sender">${esc(userLabel(ST.users[m.sender] || { uid: m.sender }))}</div>` : '';
-  const reply = m.replyTo ? `<div class="reply-q" onclick="scrollToMsg('${esc(m.replyTo.key)}')" title="Tap to jump to quoted message"><b>${esc(m.replyTo.name || 'Reply')}</b><span>${esc(m.replyTo.text || 'Attachment')}</span></div>` : '';
+  
+  const replyTargetId = (m.replyTo && (m.replyTo.key || m.replyTo.messageId)) || m.replyToMessageId;
+  const reply = replyTargetId ? `<div class="reply-q" onclick="scrollToMsg('${esc(replyTargetId)}')" title="Tap to jump to quoted message"><b>${esc((m.replyTo && m.replyTo.name) || 'Reply')}</b><span>${esc((m.replyTo && m.replyTo.text) || 'Attachment')}</span></div>` : '';
   const fwd = m.forwarded ? '<div style="font-size:11px;opacity:0.8;font-style:italic;margin-bottom:3px">↪ Forwarded</div>' : '';
   const isMedia = ['image','video','audio','voice','file'].indexOf(m.type) >= 0;
 
   const html = `${sepHTML}<div class="mwrap ${mine ? 'me' : 'them'}" id="m-${esc(m.key)}">
+      <div class="swipe-reply-cue">↩</div>
+      <button type="button" class="msg-quick-reply" onclick="event.stopPropagation();setReply(ST.chatMsgs['${esc(m.key)}'] || { key: '${esc(m.key)}' })" title="Reply to this message">↩</button>
       ${senderName}
       <div class="bub ${isMedia ? 'media' : ''}" data-key="${esc(m.key)}">${reply}${fwd}${bodyHTML(m)}${metaHTML(m)}</div>
       ${reactionsHTML(m)}
@@ -394,9 +480,10 @@ function renderMessage(m) {
 
   const el = s('m-' + m.key);
   if (el) {
+    wireSwipeToReply(el, m);
     let pressTimer = null;
     el.oncontextmenu = e => { e.preventDefault(); openMessageMenu(m.key); };
-    el.addEventListener('touchstart', () => { pressTimer = setTimeout(() => openMessageMenu(m.key), 500); }, { passive: true });
+    el.addEventListener('touchstart', () => { pressTimer = setTimeout(() => openMessageMenu(m.key), 520); }, { passive: true });
     ['touchend','touchmove','touchcancel'].forEach(ev => el.addEventListener(ev, () => clearTimeout(pressTimer), { passive: true }));
     if (m.media && (m.media.kind === 'p2p' || m.media.kind === 'inline')) hydrateMedia(m);
   }
@@ -421,8 +508,14 @@ function openMessageDetails(key) {
   const mine = m.sender === ST.me.uid;
   const author = mine ? 'You' : userLabel(ST.users[m.sender] || { uid: m.sender });
   const ts = m.timestamp || m.createdAt || now();
-  const statusStr = mine ? (m.status === 'seen' ? '✓✓ Seen / Read' : m.status === 'delivered' ? '✓✓ Delivered' : '✓ Sent') : 'Received';
+  const statusStr = mine ? (
+    (m.status === 'seen' || m.status === 'read') ? '✓✓✓ Read / Opened' :
+    (m.status === 'delivered') ? '✓✓ Delivered to recipient device' :
+    '✓ Sent & accepted by server'
+  ) : 'Received';
+  const deliveredStr = m.deliveredAt ? ` · delivered at ${fmtTime(m.deliveredAt)}` : '';
   const seenStr = m.seenAt ? ` · read at ${fmtTime(m.seenAt)}` : '';
+  const replyTargetId = (m.replyTo && (m.replyTo.key || m.replyTo.messageId)) || m.replyToMessageId;
 
   openModal(`
     <div class="pad">
@@ -438,18 +531,19 @@ function openMessageDetails(key) {
         </div>
         <div>
           <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Status</div>
-          <div style="font-weight:600;margin-top:2px">${esc(statusStr + seenStr)}</div>
+          <div style="font-weight:600;margin-top:2px">${esc(statusStr + deliveredStr + seenStr)}</div>
         </div>
         <div>
           <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Message Type</div>
           <div style="font-weight:600;margin-top:2px;text-transform:capitalize">${esc(m.type || 'text')}</div>
         </div>
-        ${m.replyTo ? `
+        ${replyTargetId ? `
           <div>
             <div style="font-size:11.5px;color:var(--kr-mut);text-transform:uppercase;font-weight:700">Reply Target</div>
-            <div style="padding:10px 12px;background:var(--kr-bg2);border-radius:12px;border-left:3px solid var(--kr-brand);margin-top:4px">
-              <div style="font-weight:700;font-size:13px">${esc(m.replyTo.name || 'Message')}</div>
-              <div style="font-size:13px;color:var(--kr-mut);margin-top:2px">${esc(m.replyTo.text || '')}</div>
+            <div style="padding:10px 12px;background:var(--kr-bg2);border-radius:12px;border-left:3px solid var(--kr-brand);margin-top:4px;cursor:pointer" onclick="Nav.close('ov-modal');scrollToMsg('${esc(replyTargetId)}')">
+              <div style="font-weight:700;font-size:13px">${esc((m.replyTo && m.replyTo.name) || 'Message')}</div>
+              <div style="font-size:13px;color:var(--kr-mut);margin-top:2px">${esc((m.replyTo && m.replyTo.text) || '')}</div>
+              <div style="font-size:11.5px;color:var(--kr-brand);margin-top:4px;font-weight:600">Tap to jump to quoted message ›</div>
             </div>
           </div>
         ` : ''}

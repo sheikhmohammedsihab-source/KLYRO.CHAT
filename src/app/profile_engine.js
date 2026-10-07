@@ -3,6 +3,123 @@
    Complete Profile Section, Multi-Account Switching, & Secure Logout
    ========================================================================== */
 
+/**
+ * SessionVault
+ * Secure persistent session token storage.
+ * Stores cryptographically issued Firebase refresh tokens in local persistent storage.
+ * NEVER stores plaintext passwords in localStorage, IndexedDB, or memory.
+ */
+const SessionVault = {
+  /** Retrieves the active Firebase session object from IndexedDB or localStorage */
+  getStoredFirebaseSession() {
+    return new Promise(resolve => {
+      try {
+        const key = `firebase:authUser:${firebaseConfig.apiKey}:[DEFAULT]`;
+        if (typeof indexedDB === 'undefined') {
+          const raw = localStorage.getItem(key);
+          return resolve(raw ? JSON.parse(raw) : null);
+        }
+
+        const req = indexedDB.open('firebaseLocalStorageDb');
+        req.onsuccess = () => {
+          const idb = req.result;
+          if (!idb.objectStoreNames.contains('firebaseLocalStorage')) {
+            const raw = localStorage.getItem(key);
+            return resolve(raw ? JSON.parse(raw) : null);
+          }
+          const tx = idb.transaction('firebaseLocalStorage', 'readonly');
+          const store = tx.objectStore('firebaseLocalStorage');
+          const getReq = store.get(key);
+          getReq.onsuccess = () => {
+            if (getReq.result) resolve(getReq.result);
+            else {
+              const raw = localStorage.getItem(key);
+              resolve(raw ? JSON.parse(raw) : null);
+            }
+          };
+          getReq.onerror = () => {
+            const raw = localStorage.getItem(key);
+            resolve(raw ? JSON.parse(raw) : null);
+          };
+        };
+        req.onerror = () => {
+          const raw = localStorage.getItem(key);
+          resolve(raw ? JSON.parse(raw) : null);
+        };
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  },
+
+  /** Writes a session object into IndexedDB and localStorage for [DEFAULT] */
+  putStoredFirebaseSession(sessionRecord) {
+    return new Promise(resolve => {
+      try {
+        if (!sessionRecord) return resolve(false);
+        const key = `firebase:authUser:${firebaseConfig.apiKey}:[DEFAULT]`;
+
+        let payload = sessionRecord;
+        if (payload.fbase_key) payload.fbase_key = key;
+        if (payload.value) {
+          payload.value.appName = '[DEFAULT]';
+          try { localStorage.setItem(key, JSON.stringify(payload.value)); } catch (e) {}
+        } else {
+          try { localStorage.setItem(key, JSON.stringify(payload)); } catch (e) {}
+        }
+
+        if (typeof indexedDB === 'undefined') return resolve(true);
+
+        const req = indexedDB.open('firebaseLocalStorageDb');
+        req.onsuccess = () => {
+          const idb = req.result;
+          if (!idb.objectStoreNames.contains('firebaseLocalStorage')) return resolve(true);
+          const tx = idb.transaction('firebaseLocalStorage', 'readwrite');
+          const store = tx.objectStore('firebaseLocalStorage');
+          const putReq = store.put(payload);
+          putReq.onsuccess = () => resolve(true);
+          putReq.onerror = () => resolve(false);
+        };
+        req.onerror = () => resolve(false);
+      } catch (e) {
+        resolve(false);
+      }
+    });
+  },
+
+  /** Save active account's token session locally under its uid */
+  async backup(uid) {
+    if (!uid) return;
+    try {
+      const sess = await this.getStoredFirebaseSession();
+      if (sess) {
+        localStorage.setItem('klyro_session_' + uid, JSON.stringify(sess));
+      }
+    } catch (e) {}
+  },
+
+  /** Restores target account's token session into [DEFAULT] */
+  async restore(uid) {
+    if (!uid) return false;
+    try {
+      const raw = localStorage.getItem('klyro_session_' + uid);
+      if (!raw) return false;
+      const sess = JSON.parse(raw);
+      await this.putStoredFirebaseSession(sess);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  /** Clear session for removed account */
+  remove(uid) {
+    try {
+      localStorage.removeItem('klyro_session_' + uid);
+    } catch (e) {}
+  }
+};
+
 const AccountManager = {
   STORAGE_KEY: 'klyro_saved_accounts',
 
@@ -38,6 +155,8 @@ const AccountManager = {
         list.push(acc);
       }
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+      // Asynchronously backup session token without passwords
+      SessionVault.backup(me.uid);
     } catch (e) {
       console.warn('[KLYRO] Could not save account to storage:', e);
     }
@@ -49,6 +168,7 @@ const AccountManager = {
       let list = this.getSavedAccounts();
       list = list.filter(a => a.uid !== uid);
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(list));
+      SessionVault.remove(uid);
       toast('Account removed from this device');
       if (typeof renderProfileSection === 'function') renderProfileSection();
       this.renderSavedAccountsOnLogin();
@@ -57,7 +177,7 @@ const AccountManager = {
     }
   },
 
-  /** Switch to another remembered account */
+  /** Switch to another remembered account without re-entering password */
   async switchToAccount(targetUid) {
     const list = this.getSavedAccounts();
     const target = list.find(a => a.uid === targetUid);
@@ -69,17 +189,20 @@ const AccountManager = {
     }
 
     // Save current active account first
-    if (ST.me) this.saveActive(ST.me);
+    if (ST.me) {
+      this.saveActive(ST.me);
+      await SessionVault.backup(ST.me.uid);
+    }
 
     confirmSheet(
       'Switch Account',
-      `Switch to ${esc(target.name || target.username)} (${esc(target.email || 'user')})?`,
+      `Switch to ${esc(target.name || target.username)}?`,
       'Switch Now',
       async () => {
         Nav.closeAllOverlays();
         toast('Switching account…');
 
-        // Gracefully sign out current Firebase session
+        // Gracefully clean up active session presence and listeners
         try {
           if (ST.me && ST.me.uid) {
             await db.ref('users/' + ST.me.uid + '/online').set(false).catch(() => {});
@@ -95,12 +218,25 @@ const AccountManager = {
 
         ST.me = null;
         ST.chat = null;
+        ST.chats = {};
+        ST.unread = {};
 
+        // Attempt instant token session restore without password
+        const hasSession = await SessionVault.restore(targetUid);
+
+        if (hasSession) {
+          // Show sleek loading transition and reboot with complete isolation
+          toast(`Switching to ${target.name}…`);
+          setTimeout(() => {
+            window.location.reload();
+          }, 350);
+          return;
+        }
+
+        // Fallback: If session token is not present or expired, prompt to re-authenticate
         try { await auth.signOut(); } catch (e) {}
-
         AuthState.set(AuthState.SIGNED_OUT);
 
-        // Pre-fill target email in sign in form
         setTimeout(() => {
           const emailInp = s('login-email');
           const passInp = s('login-password');
@@ -108,7 +244,7 @@ const AccountManager = {
             emailInp.value = target.email || '';
             if (passInp) passInp.focus();
           }
-          toast(`Enter password for ${target.name || target.email}`);
+          toast(`Please re-authenticate for ${target.name || target.email}`);
           this.renderSavedAccountsOnLogin();
         }, 300);
       }
@@ -116,12 +252,15 @@ const AccountManager = {
   },
 
   /** Add or sign in to another account */
-  addAnotherAccount() {
-    if (ST.me) this.saveActive(ST.me);
+  async addAnotherAccount() {
+    if (ST.me) {
+      this.saveActive(ST.me);
+      await SessionVault.backup(ST.me.uid);
+    }
 
     confirmSheet(
       'Add Another Account',
-      'Sign into or create a secondary account. Your current account will stay saved on this device so you can switch back anytime.',
+      'Sign into or create a secondary account. Your current account will stay saved on this device so you can switch back anytime without re-entering your password.',
       'Continue',
       async () => {
         Nav.closeAllOverlays();
@@ -151,7 +290,7 @@ const AccountManager = {
           const passInp = s('login-password');
           if (emailInp) emailInp.value = '';
           if (passInp) passInp.value = '';
-          toast('Enter credentials for your other account');
+          toast('Enter credentials for your new account');
           this.renderSavedAccountsOnLogin();
         }, 300);
       }

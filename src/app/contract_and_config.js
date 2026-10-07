@@ -259,6 +259,57 @@ function fmtTime(ts) {
   try { return new Date(ts || now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; }
 }
 
+function fmtMessageTime(ts) {
+  if (!ts) return '';
+  try {
+    const d = new Date(ts);
+    const nowD = new Date();
+    const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (d.toDateString() === nowD.toDateString()) {
+      return timeStr;
+    }
+
+    const yesterday = new Date(Date.now() - 864e5);
+    if (d.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday ' + timeStr;
+    }
+
+    const sameYear = d.getFullYear() === nowD.getFullYear();
+    const dateStr = d.toLocaleDateString([], {
+      day: 'numeric',
+      month: 'short',
+      ...(sameYear ? {} : { year: '2-digit' })
+    });
+    return dateStr + ' ' + timeStr;
+  } catch (e) {
+    return fmtTime(ts);
+  }
+}
+
+function fmtChatPreviewTime(ts) {
+  if (!ts) return '';
+  try {
+    const d = new Date(ts);
+    const nowD = new Date();
+    if (d.toDateString() === nowD.toDateString()) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    const yesterday = new Date(Date.now() - 864e5);
+    if (d.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+    const diffDays = Math.floor((nowD - d) / 864e5);
+    if (diffDays < 7) {
+      return d.toLocaleDateString([], { weekday: 'short' });
+    }
+    const sameYear = d.getFullYear() === nowD.getFullYear();
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short', ...(sameYear ? {} : { year: '2-digit' }) });
+  } catch (e) {
+    return fmtWhen(ts);
+  }
+}
+
 function fmtFullTime(ts) {
   try {
     const d = new Date(ts || now());

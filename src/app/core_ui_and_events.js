@@ -112,11 +112,24 @@ function getPreviewText(m) {
 }
 
 function buildMessage(extra) {
-  const base = { sender: ST.me.uid, timestamp: now(), status: 'sent' };
+  const ts = now();
+  const base = {
+    sender: ST.me.uid,
+    timestamp: ts,
+    createdAt: ts,
+    status: 'sent'
+  };
   const st = settingsOf(ST.me);
-  if (st.disappearSeconds > 0) base.expiresAt = now() + st.disappearSeconds * 1000;
+  if (st.disappearSeconds > 0) base.expiresAt = ts + st.disappearSeconds * 1000;
   if (ST.replying) {
-    base.replyTo = { key: ST.replying.key, name: ST.replying.name, text: ST.replying.text };
+    base.replyToMessageId = ST.replying.key;
+    base.replyTo = {
+      key: ST.replying.key,
+      messageId: ST.replying.key,
+      sender: ST.replying.sender,
+      name: ST.replying.name,
+      text: ST.replying.text
+    };
     cancelReply();
   }
   return Object.assign(base, extra || {});
@@ -128,7 +141,8 @@ function pushMessage(msg) {
 
   // Canonical server-safe timestamp
   msg.timestamp = msg.timestamp || now();
-  msg.createdAt = msg.timestamp;
+  msg.createdAt = msg.createdAt || msg.timestamp;
+  msg.status = msg.status || 'sent';
 
   return db.ref(pathFor(chatId, type)).push(msg).then(ref => {
     const msgId = ref.key;
@@ -179,14 +193,29 @@ function sendText() {
 }
 
 function setReply(m) {
-  ST.replying = { key: m.key, name: m.sender === ST.me.uid ? 'You' : userLabel(ST.users[m.sender] || {}), text: getPreviewText(m).slice(0, 120) };
+  if (!m) return;
+  const key = m.key || m.messageId || m.id;
+  const senderUid = m.sender || '';
+  const senderName = (ST.me && senderUid === ST.me.uid) ? 'You' : userLabel(ST.users[senderUid] || { name: m.senderName });
+  ST.replying = {
+    key: key,
+    messageId: key,
+    sender: senderUid,
+    name: senderName || 'User',
+    text: (getPreviewText(m) || m.text || 'Attachment').slice(0, 140)
+  };
   const p = s('reply-preview');
   if (p) {
     p.classList.add('show');
-    s('reply-author').textContent = ST.replying.name;
-    s('reply-text').textContent = ST.replying.text;
+    const authEl = s('reply-author');
+    const textEl = s('reply-text');
+    if (authEl) authEl.textContent = ST.replying.name;
+    if (textEl) textEl.textContent = ST.replying.text;
   }
-  const inp = s('composer-input'); if (inp) inp.focus();
+  const inp = s('composer-input');
+  if (inp) {
+    inp.focus();
+  }
 }
 
 function cancelReply() {
@@ -860,9 +889,30 @@ function listenNotifications() {
       !document.hidden);
     
     if (isCurrentActiveChat) {
-      // User is actively looking at this conversation: mark read silently
+      // User is actively looking at this conversation: mark delivered & read
       sn.ref.update({ status: 'seen' }).catch(() => {});
+      const userReads = privacyOf(ST.me).readReceipts !== false;
+      const statusToSet = userReads ? 'seen' : 'delivered';
+      if (n.conversationId && n.messageId) {
+        db.ref('messages/' + n.conversationId + '/' + n.messageId).update({
+          status: statusToSet,
+          deliveredAt: now(),
+          seenAt: userReads ? now() : null
+        }).catch(() => {});
+      }
       return;
+    }
+
+    // Message reached recipient's active device session: mark delivered (✓✓) on server!
+    if (n.conversationId && n.messageId) {
+      db.ref('messages/' + n.conversationId + '/' + n.messageId).transaction(cur => {
+        if (cur && (!cur.status || cur.status === 'sent')) {
+          cur.status = 'delivered';
+          cur.deliveredAt = cur.deliveredAt || now();
+          return cur;
+        }
+        return undefined;
+      }).catch(() => {});
     }
 
     // Trigger System / Web Notification if backgrounded or permitted
@@ -1434,7 +1484,7 @@ function renderHome() {
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
-            <span>Play 1 Arcade Match</span>
+            <span>Share a 24h Status Story</span>
             <span style="color:var(--kr-brand);font-weight:700">0 / 1</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
